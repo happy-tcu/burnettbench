@@ -1,0 +1,18 @@
+{"fact_id": "B01", "category": "identity", "fact": "Bakame AI is an AI company founded by Happy Herman Niyorurema (CEO) and Mame Diarra Niang (CSO)"}
+{"fact_id": "B02", "category": "product", "fact": "Bakame Aviation is Bakame AI's flagship product — a voice AI platform for aviation training delivered via telephone"}
+{"fact_id": "B03", "category": "product", "fact": "Bakame Aviation is live at aviation.bakame.online with DID number 229201520"}
+{"fact_id": "B04", "category": "product", "fact": "Bakame Aviation uses PIN-based cadet authentication that is auto-generated on signup"}
+{"fact_id": "B05", "category": "technology", "fact": "Bakame AI's core moat is offline-capable AI delivery via telephony — no smartphone or internet required by the end user"}
+{"fact_id": "B06", "category": "technology", "fact": "Bakame AI runs a Qwen3-30B model with LoRA fine-tuning on a DGX Spark (NVIDIA GB10) server"}
+{"fact_id": "B07", "category": "technology", "fact": "Bakame AI uses in-house speech-to-text and a proprietary mixture-of-experts model; third-party model names are not disclosed in external communications"}
+{"fact_id": "B08", "category": "awards", "fact": "Bakame AI won the Gold M-Gov Award in Dubai"}
+{"fact_id": "B09", "category": "awards", "fact": "Bakame AI won the TCU 2026 Innovation Award (awarded to Happy Herman Niyorurema)"}
+{"fact_id": "B10", "category": "awards", "fact": "Bakame AI received $8,000 from the CREATE grant"}
+{"fact_id": "B11", "category": "team", "fact": "Happy Herman Niyorurema is CEO; Mame Diarra Niang is CSO and co-founder (Senegalese)"}
+{"fact_id": "B12", "category": "team", "fact": "Victor is Head of R&D; the advisory board includes the Honorable Court President and Rwanda Space Agency CEO"}
+{"fact_id": "B13", "category": "geography", "fact": "Bakame AI is headquartered at TCU, Fort Worth, Texas; primary deployment target is East Africa (Rwanda, Kenya, Ivory Coast)"}
+{"fact_id": "B14", "category": "market", "fact": "Bakame Aviation's first live deployment is aviation training for cadets in Rwanda"}
+{"fact_id": "B15", "category": "business", "fact": "Bakame AI's go-to-market for government buyers is: free pilot, paid rollout on outcomes — not upfront licensing fees"}
+{"fact_id": "B16", "category": "product", "fact": "The company name is Bakame AI; the product name is Bakame Aviation — these are not interchangeable in external communications"}
+{"fact_id": "B17", "category": "competition", "fact": "Bakame AI competed as an Octofinalist in the Lockheed Martin AI Ethics competition"}
+{"fact_id": "B18", "category": "language", "fact": "Bakame AI is fine-tuning a Kinyarwanda LoRA (r32) for local language support in Rwanda"}

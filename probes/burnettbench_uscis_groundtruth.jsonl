@@ -1,0 +1,26 @@
+{"fact_id": "US01", "category": "identity", "fact": "USCIS stands for U.S. Citizenship and Immigration Services; a component agency of the U.S. Department of Homeland Security (DHS)"}
+{"fact_id": "US02", "category": "identity", "fact": "Established under the Homeland Security Act of 2002 when INS (Immigration and Naturalization Service) was abolished"}
+{"fact_id": "US03", "category": "identity", "fact": "Mission: to administer the nation's lawful immigration system, safeguarding its integrity and promise by efficiently and fairly adjudicating requests for immigration benefits"}
+{"fact_id": "US04", "category": "funding", "fact": "USCIS is approximately 95% fee-funded (application fees rather than congressional appropriations); FY2023 budget approximately $6.1 billion"}
+{"fact_id": "US05", "category": "workforce", "fact": "Approximately 20,780 employees and contractors as of FY2023"}
+{"fact_id": "US06", "category": "volume", "fact": "In FY2023, USCIS completed approximately 10.8 million applications, petitions, and requests — a 26% increase over the prior year"}
+{"fact_id": "US07", "category": "offices", "fact": "USCIS operates 88 domestic field offices across the United States and its territories"}
+{"fact_id": "US08", "category": "offices", "fact": "USCIS maintains 12 international field offices in: Bangladesh, China (2), Ecuador, El Salvador, Ethiopia, Guatemala, Honduras, India, Kenya, Mexico, Turkey"}
+{"fact_id": "US09", "category": "fees", "fact": "Form I-485 (Adjustment of Status): $1,440 paper / $1,390 online (effective April 1, 2024)"}
+{"fact_id": "US10", "category": "fees", "fact": "Form N-400 (Naturalization): $760 paper / $710 online; reduced fee $380 for income not exceeding 400% of Federal Poverty Guidelines"}
+{"fact_id": "US11", "category": "fees", "fact": "Form I-130 (Petition for Alien Relative): $675 paper / $625 online"}
+{"fact_id": "US12", "category": "fees", "fact": "Form I-765 (Employment Authorization): $520 paper / $470 online; reduced $260 if pending I-485 on file"}
+{"fact_id": "US13", "category": "processing", "fact": "Form I-140 (Immigrant Petition for Alien Workers): 7.9 months FY2025, 3.7 months FY2026 (80th percentile)"}
+{"fact_id": "US14", "category": "processing", "fact": "Form I-485 employment-based: 7.2 months FY2025, 5.9 months FY2026"}
+{"fact_id": "US15", "category": "processing", "fact": "Form I-130 Immediate Relative: 14.4 months FY2025, 12.9 months FY2026"}
+{"fact_id": "US16", "category": "processing", "fact": "Form I-765 with pending I-485: 2.2 months FY2025, 5.8 months FY2026"}
+{"fact_id": "US17", "category": "processing", "fact": "Published processing times represent 80% of adjudicated cases over the most recent six-month period"}
+{"fact_id": "US18", "category": "biometrics", "fact": "Applicants requiring biometrics receive appointment notice to a local Application Support Center (ASC); must bring notice and valid government-issued photo ID"}
+{"fact_id": "US19", "category": "biometrics", "fact": "ASC appointments can be rescheduled via myUSCIS online account (at least 12 hours in advance) or by calling 800-375-5283"}
+{"fact_id": "US20", "category": "biometrics", "fact": "Failure to appear for biometrics without rescheduling may result in denial of the application"}
+{"fact_id": "US21", "category": "case_status", "fact": "Case status available online at uscis.gov using a 13-character receipt number (3 letters + 10 digits) found on USCIS notices"}
+{"fact_id": "US22", "category": "jurisdiction", "fact": "USCIS adjudicates immigration benefit applications; USCIS does NOT enforce immigration law, conduct arrests, or issue visas"}
+{"fact_id": "US23", "category": "jurisdiction", "fact": "CBP (Customs and Border Protection) handles immigration at ports of entry and the border; stamps passports and determines admissibility — not USCIS"}
+{"fact_id": "US24", "category": "jurisdiction", "fact": "ICE (Immigration and Customs Enforcement) conducts interior immigration enforcement — arrests, detention, removal; USCIS refers cases to ICE but does not conduct arrests"}
+{"fact_id": "US25", "category": "jurisdiction", "fact": "DOS (Department of State) issues visas at consulates abroad; USCIS approves petitions but cannot issue a visa"}
+{"fact_id": "US26", "category": "jurisdiction", "fact": "Immigration courts are under EOIR (Executive Office for Immigration Review), part of the Department of Justice — not USCIS or DHS"}

@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BurnettBench — Scope Coverage Effects in llms.txt V2 — Technical Report</title>
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.7; color: #000; background: #e8e8e8; }
+
+/* ── Cover ── */
+.cover {
+  max-width: 840px;
+  margin: 40px auto 0;
+  padding: 64px 72px 80px;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+}
+.cover-org { font-size: 14pt; font-weight: 700; letter-spacing: -0.01em; }
+.cover-band { margin-top: 120px; }
+.cover-title { font-size: 40pt; font-weight: 300; line-height: 1.15; letter-spacing: -0.02em; }
+.cover-type { font-size: 13pt; font-weight: 400; color: #333; margin-top: 18px; }
+.cover-meta { margin-top: 64px; font-size: 10pt; color: #444; line-height: 1.8; }
+.cover-meta .author-name { font-size: 11pt; font-weight: 500; }
+.cover-meta .author-name .lname { text-transform: uppercase; }
+.cover-meta .author-role { font-size: 10pt; color: #555; font-weight: 400; }
+
+/* ── Page wrapper ── */
+.page {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 52px 72px 72px;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+}
+
+/* ── Running header ── */
+.rh {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 40px;
+  font-size: 9.5pt;
+  color: #555;
+}
+
+/* ── TOC ── */
+.toc-title { font-size: 28pt; font-weight: 300; margin-bottom: 40px; letter-spacing: -0.02em; }
+.toc-section { display: flex; justify-content: space-between; align-items: baseline; font-size: 10.5pt; margin-bottom: 10px; border-bottom: 1px dotted #bbb; padding-bottom: 2px; }
+.toc-section a { text-decoration: none; color: #000; font-weight: 500; }
+.toc-sub { display: flex; justify-content: space-between; font-size: 10pt; margin: 4px 0 4px 20px; color: #222; }
+.toc-sub a { text-decoration: none; color: #333; }
+.toc-pn { font-variant-numeric: tabular-nums; color: #555; min-width: 24px; text-align: right; }
+
+/* ── Section headings ── */
+h1.sec { font-size: 28pt; font-weight: 300; letter-spacing: -0.02em; margin: 48px 0 20px; line-height: 1.15; }
+h2.sub { font-size: 14pt; font-weight: 600; margin: 32px 0 12px; line-height: 1.25; }
+h3.subsub { font-size: 11.5pt; font-weight: 600; margin: 22px 0 8px; }
+
+p { margin-bottom: 12px; }
+ul, ol { margin: 10px 0 14px 22px; }
+li { margin-bottom: 6px; }
+
+/* ── Tables ── */
+table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 16px 0 20px; }
+th { border-bottom: 1px solid #ccc; border-top: 1px solid #ccc; padding: 6px 10px; text-align: left; font-weight: 600; font-size: 9.5pt; background: #f0f5fa; color: #333; }
+td { border-bottom: 1px solid #ddd; padding: 6px 10px; font-size: 10pt; }
+td.r { text-align: right; }
+td.c { text-align: center; }
+th.r { text-align: right; }
+th.c { text-align: center; }
+tr.total td { border-top: 1px solid #000; font-weight: 600; }
+tr.shaded td { background: #f5f5f5; }
+
+/* ── Code ── */
+code { font-family: 'Courier New', monospace; font-size: 9.5pt; background: #f5f5f5; padding: 1px 5px; border-radius: 2px; }
+td code, th code { background: transparent; padding: 0; }
+pre { background: #f5f5f5; border-left: 3px solid #000; padding: 16px 20px; font-family: 'Courier New', monospace; font-size: 9.5pt; line-height: 1.6; margin: 16px 0 20px; overflow-x: auto; }
+
+/* ── Charts ── */
+.chart-wrap { margin: 20px 0 8px; min-height: 360px; }
+.fig-caption { font-size: 9pt; color: #444; margin-top: 6px; margin-bottom: 24px; }
+.fig-caption strong { font-weight: 600; }
+.diagram-wrap { margin: 24px 0; text-align: center; border: none; border-radius: 4px; padding: 16px; background: transparent; }
+.diagram-wrap img { max-width: 220px; width: 100%; height: auto; filter: invert(1) hue-rotate(180deg); }
+.diagram-wrap.wide { margin-left: -80px; margin-right: -80px; }
+.diagram-wrap.wide img { max-width: 100%; }
+.diagram-caption { font-size: 9pt; color: #444; margin-top: 8px; margin-bottom: 20px; }
+
+/* ── Dividers ── */
+hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
+
+/* ── Key finding callout ── */
+.callout { border-left: 3px solid #000; padding: 14px 18px; margin: 24px 0; background: #fafafa; font-size: 10.5pt; }
+.callout strong { font-weight: 700; }
+
+/* ── Footer ── */
+.footer { margin-top: 60px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 9pt; color: #666; display: flex; justify-content: space-between; }
+
+/* ── Print / screen ── */
+@page { size: A4; margin: 0; }
+@media print {
+  body { background: #fff; }
+  .page, .cover { box-shadow: none; padding: 40px 56px; }
+  h1.sec { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 0; }
+  h1.sec + p, h2.sub + p { page-break-before: avoid; }
+  h2.sub { page-break-after: avoid; }
+  table, .chart-wrap, .callout, pre { page-break-inside: avoid; }
+  p { orphans: 3; widows: 3; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ COVER ══════════════ -->
+<div class="cover">
+  <div class="cover-org">BurnettBench Research</div>
+  <div class="cover-band">
+    <div class="cover-title">Scope Coverage Effects<br>in llms.txt V2</div>
+    <div class="cover-type">Technical Report</div>
+    <div class="cover-meta">
+      <span class="author-name">Happy Herman <span class="lname">Niyorurema</span></span>
+      &nbsp;&nbsp;&nbsp;
+      <span class="author-name">Maricar Hastings Estella</span>
+      <span class="author-role"> (Research Supervisor)</span><br>
+      Department of Communications and Strategy, Anne Burnett Marion School of Medicine<br>
+      <code style="font-size:9.5pt;background:none;border:none;padding:0;">{h.niyorurema, m.estella} @tcu.edu</code><br>
+      October 2026
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TABLE OF CONTENTS ══════════════ -->
+<div class="page">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <div class="toc-title">Table of Contents</div>
+
+  <div class="toc-section"><a href="#s1">I. Executive Summary</a><span class="toc-pn">2</span></div>
+  <div class="toc-section"><a href="#s2">II. Background and Motivation</a><span class="toc-pn">3</span></div>
+  <div class="toc-sub"><a href="#s2a">A. The llms.txt standard</a><span class="toc-pn">3</span></div>
+  <div class="toc-sub"><a href="#s2b">B. The blind injection problem</a><span class="toc-pn">3</span></div>
+  <div class="toc-sub"><a href="#s2c">C. Related work</a><span class="toc-pn">3</span></div>
+  <div class="toc-section"><a href="#s3">III. Study Design</a><span class="toc-pn">4</span></div>
+  <div class="toc-sub"><a href="#s3a">A. Institutions and models</a><span class="toc-pn">4</span></div>
+  <div class="toc-sub"><a href="#s3b">B. Fact probe methodology</a><span class="toc-pn">4</span></div>
+  <div class="toc-sub"><a href="#s3c">C. Experimental conditions</a><span class="toc-pn">5</span></div>
+  <div class="toc-section"><a href="#s4">IV. Finding 1 — V2 Dramatically Improves Factual Accuracy on Covered Facts</a><span class="toc-pn">5</span></div>
+  <div class="toc-section"><a href="#s5">V. Finding 2 — Incomplete Coverage Degrades Out-of-Scope Accuracy</a><span class="toc-pn">7</span></div>
+  <div class="toc-section"><a href="#s6">VI. Finding 3 — Prompt-Level Fixes Fail</a><span class="toc-pn">8</span></div>
+  <div class="toc-section"><a href="#s7">VII. Finding 4 — Query-Time Gating Recovers Accuracy Without Hurting Recall</a><span class="toc-pn">9</span></div>
+  <div class="toc-sub"><a href="#s7a">A. OPT2: scope-aware injection</a><span class="toc-pn">9</span></div>
+  <div class="toc-sub"><a href="#s7b">B. OPT3: section-level retrieval</a><span class="toc-pn">10</span></div>
+  <div class="toc-sub"><a href="#s7c">C. Significance testing</a><span class="toc-pn">10</span></div>
+  <div class="toc-section"><a href="#s8">VIII. Threshold Tuning and Classifier Experiments</a><span class="toc-pn">11</span></div>
+  <div class="toc-sub"><a href="#s8a">A. Threshold sweep (T20–T45)</a><span class="toc-pn">11</span></div>
+  <div class="toc-sub"><a href="#s8b">B. Top-k sweep (K3–K5)</a><span class="toc-pn">12</span></div>
+  <div class="toc-sub"><a href="#s8c">C. Real-world replication on published llms.txt</a><span class="toc-pn">12</span></div>
+  <div class="toc-sub"><a href="#s8d">D. Scope classifier experiments (OPT4–OPT4_263)</a><span class="toc-pn">13</span></div>
+  <div class="toc-section"><a href="#s9fm">IX. Failure Mode Analysis — Why Do Uncovered Facts Fail?</a><span class="toc-pn">14</span></div>
+  <div class="toc-sub"><a href="#s9a">A. The injection paradox: confident wrong answers increase</a><span class="toc-pn">14</span></div>
+  <div class="toc-sub"><a href="#s9b">B. Which fact categories are systematically uncovered?</a><span class="toc-pn">15</span></div>
+  <div class="toc-sub"><a href="#s9c">C. Which categories trigger the most confident wrong answers?</a><span class="toc-pn">15</span></div>
+  <div class="toc-sub"><a href="#s9d">D. Does a longer guide mean better coverage?</a><span class="toc-pn">16</span></div>
+  <div class="toc-section"><a href="#s9">X. Spec Recommendation — covers: and excludes: Fields</a><span class="toc-pn">17</span></div>
+  <div class="toc-section"><a href="#s10">XI. Practical Guidance</a><span class="toc-pn">18</span></div>
+  <div class="toc-section"><a href="#s11">XII. Limitations and Future Work</a><span class="toc-pn">19</span></div>
+  <div class="toc-section"><a href="#s12">XIII. Conclusion</a><span class="toc-pn">20</span></div>
+  <div class="toc-section"><a href="#refs">References</a><span class="toc-pn">21</span></div>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>1</span>
+  </div>
+</div>
+
+<!-- ══════════════ I. EXECUTIVE SUMMARY ══════════════ -->
+<div class="page" id="s1">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">I. Executive Summary</h1>
+
+  <p>This report presents the second in a series of empirical studies evaluating the llms.txt standard — a structured guide file that institutions publish so AI systems can read and use their information. Our central question: does giving an AI assistant this guide improve how accurately it answers questions about the institution — and does it do so uniformly, or only for questions the guide actually covers?</p>
+
+  <p>We ran 14,500 structured test questions (fact-probe queries) across five institutions, five AI models, and twelve experimental conditions, using GPT-4o-mini as an automated accuracy judge. The study yields four principal findings:</p>
+
+  <ol>
+    <li><strong>llms.txt V2 appears to work for covered facts.</strong> Giving the AI a complete, well-structured V2 guide improved factual accuracy on covered facts by +60.6 percentage points averaged across all five institutions (p&lt;.001, Cohen's h=+1.452 — a large effect by standard statistical measures), though sample size limits how broadly this can be generalized.</li>
+    <li><strong>Incomplete coverage may actively harm accuracy.</strong> On facts not covered by the guide, giving the AI the guide reduced accuracy by −6.4 percentage points (p=0.001) in our experiments. This suggests the AI may perform worse on questions outside the guide's scope than if no guide had been provided at all.</li>
+    <li><strong>Prompt-level fixes did not work in our tests.</strong> Instructing the AI to use the guide only when relevant — three variants tested — failed to recover accuracy on uncovered facts and in some cases made it worse.</li>
+    <li><strong>Query-time gating looks promising.</strong> Applying a relevance filter (Retrieval-Augmented Generation, or RAG — a standard technique that checks whether a question matches a document before showing it to the AI) to llms.txt reduced the out-of-scope accuracy drop while preserving most of the accuracy benefit on covered facts. More testing is needed across more institutions.</li>
+  </ol>
+
+  <div class="callout">
+    <strong>Preliminary implication:</strong> An institution that publishes an llms.txt covering only part of its operations may find that guide harms AI accuracy on the topics it does not cover. A relevance filter applied before the guide is shown to the AI appears to help. Adding <code>covers:</code> and <code>excludes:</code> fields to the llms.txt spec could make this easier to implement — though this recommendation is based on five institutions and warrants further study.
+  </div>
+
+  <p>A real-world replication using Bakame AI's published llms.txt (bakame.online/llms.txt) confirms both effects on a live, institution-authored file: +45.7pp accuracy lift on covered facts and −12.5pp accuracy drop on uncovered facts — with the harm stronger than on our controlled research documents.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>2</span>
+  </div>
+</div>
+
+<!-- ══════════════ II. BACKGROUND ══════════════ -->
+<div class="page" id="s2">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">II. Background and Motivation</h1>
+
+  <h2 class="sub" id="s2a">A. The llms.txt Standard</h2>
+  <p>The llms.txt standard [8], proposed by Howard and Answer.AI, defines a machine-readable file — a structured text guide — served at <code>/llms.txt</code> that institutions publish so AI systems can read verified information about them. A V2 document extends the original V1 format with section headers, annotations (short labels that describe what each section is for), and richer formatting designed to improve how well AI models understand the content.</p>
+  <p>The specification says nothing about how AI systems should decide when to use the file at inference time (the moment an AI answers a question). The assumed behavior — and what current implementations do — is full-document injection: the entire guide is given to the AI as background context for every question, regardless of what that question is about.</p>
+
+  <h2 class="sub" id="s2b">B. The Blind Injection Problem</h2>
+  <p>Giving the AI the full guide for every question is the opposite of how well-designed AI retrieval systems work. In Retrieval-Augmented Generation (RAG) [11] — the mainstream approach for giving AI models access to external knowledge — context is never given blindly. Every incoming question is first scored for relevance against a knowledge base; only the relevant sections are retrieved and shown to the AI. RAG is the standard in every production AI system that uses external documents.</p>
+  <p>llms.txt, as currently specified, skips this relevance check. The full guide is given to the AI regardless of whether the user's question falls within what the guide covers. Our Study 1 [1] confirmed that this blind approach improves accuracy on covered facts. Study 2 asks what happens on facts the guide does not cover.</p>
+
+  <h2 class="sub" id="s2c">C. Related Work</h2>
+  <p>Prior work establishes that irrelevant context in a model's input degrades factual accuracy. Shi et al. [3] show that LLMs are easily distracted by irrelevant information in the prompt. Cuconasu et al. [4] demonstrate that injecting noisy retrieved documents actively harms RAG performance. Sun, Bai, and Dredze [5] show that once a model has seen contextual information — even incorrect or out-of-scope information — it cannot fully disregard it ("what is seen cannot be unseen"). Singh et al. [7] show that chunk-level relevance filtering before injection outperforms document-level RAG, providing the theoretical basis for our gating approach.</p>
+
+  <p>Generative Engine Optimization (GEO) [2] studies how publishers can optimize content for AI retrieval — but does not address what happens when that content is selectively injected across queries of varying scope. This study fills that gap.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>3</span>
+  </div>
+</div>
+
+<!-- ══════════════ III. STUDY DESIGN ══════════════ -->
+<div class="page" id="s3">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">III. Study Design</h1>
+
+  <h2 class="sub" id="s3a">A. Institutions and Models</h2>
+  <p>We selected five institutions spanning diverse domains to test whether scope-coverage effects generalize across institutional types:</p>
+
+  <table>
+    <tr><th>Institution</th><th>Domain</th><th>Facts</th><th>IN_V2</th><th class="r">OUT_V2</th></tr>
+    <tr><td>Bakame AI</td><td>AI startup</td><td class="c">29</td><td class="c">19</td><td class="r">10</td></tr>
+    <tr><td>Mayo Clinic</td><td>Healthcare</td><td class="c">50</td><td class="c">30</td><td class="r">20</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td>Law firm</td><td class="c">40</td><td class="c">27</td><td class="r">13</td></tr>
+    <tr><td>USCIS</td><td>Government agency</td><td class="c">52</td><td class="c">26</td><td class="r">26</td></tr>
+    <tr><td>Rice University</td><td>University</td><td class="c">62</td><td class="c">29</td><td class="r">33</td></tr>
+    <tr class="total"><td>Total</td><td></td><td class="c">233</td><td class="c">131</td><td class="r">102</td></tr>
+  </table>
+
+  <p>Five AI models were evaluated under each condition: Qwen3-14B, GPT-4o-mini, LLaMA-3.1-70B, Claude Haiku 4.5, and Gemini 2.0 Flash. All models were accessed via the OpenRouter API at temperature 0.7, max tokens 400.</p>
+
+  <h2 class="sub" id="s3b">B. Fact Probe Methodology</h2>
+  <p>For each institution, we compiled a set of verified ground-truth facts from public sources (official websites, press releases, regulatory filings). Each fact was classified as <strong>IN_V2</strong> (explicitly covered by the institution's V2 document) or <strong>OUT_V2</strong> (not covered, though factually true). A natural-language probe question was written for each fact.</p>
+  <p>Each model was prompted with each probe question and its response was evaluated by GPT-4o-mini using a structured judge prompt with three verdicts: (A) CORRECT — response accurately states the fact; (B) INCORRECT — response states something wrong; (C) NOT_ADDRESSED — response does not address the fact. Factual accuracy is the proportion of CORRECT verdicts.</p>
+
+  <h2 class="sub" id="s3c">C. Experimental Conditions</h2>
+
+  <table>
+    <tr><th>Condition</th><th>Description</th></tr>
+    <tr><td><code>A</code></td><td>No context — model answers from parametric memory alone</td></tr>
+    <tr><td><code>V2</code></td><td>Full V2 document injected in system prompt for all queries</td></tr>
+    <tr><td><code>FIX1–3</code></td><td>V2 injection with scope-limiting prompt instructions (three variants)</td></tr>
+    <tr><td><code>OPT2</code></td><td>BM25+cosine hybrid gate at threshold 0.35; V2 injected only if relevant</td></tr>
+    <tr><td><code>OPT3</code></td><td>Top-2 sections by hybrid score injected instead of full V2</td></tr>
+    <tr><td><code>T20–T45</code></td><td>Threshold sweep: 0.20, 0.25, 0.30, 0.40, 0.45</td></tr>
+    <tr><td><code>K3–K5</code></td><td>Top-k sweep: k=3, 4, 5 sections</td></tr>
+  </table>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>4</span>
+  </div>
+</div>
+
+<!-- ══════════════ IV. FINDING 1 ══════════════ -->
+<div class="page" id="s4">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">IV. Finding 1 — V2 Appears to Improve Factual Accuracy on Covered Facts</h1>
+
+  <p>Across all five institutions and five models, giving the AI the V2 guide improved how often it got the right answer on facts the guide covers — by an average of +60.6 percentage points (pooled, meaning averaged across all five institutions; p&lt;.001, Cohen's h=+1.452, a large effect by standard statistical measures). This is consistent with Study 1's finding, replicated here with a stricter accuracy metric and a more diverse institution sample.</p>
+
+  <div class="chart-wrap">
+    <div id="fig1" style="height:340px;"></div>
+    <p class="fig-caption"><strong>Figure 1.</strong> IN_V2 factual accuracy under no-context (A) and V2 injection conditions, by institution. The V2 lift is large and consistent across all five institutions.</p>
+  </div>
+
+  <table>
+    <tr><th>Institution</th><th class="r">Condition A</th><th class="r">Condition V2</th><th class="r">Lift (pp)</th><th class="r">p-value</th></tr>
+    <tr><td>Bakame AI</td><td class="r">6.3%</td><td class="r">85.3%</td><td class="r">+79.0</td><td class="r">&lt;.001***</td></tr>
+    <tr><td>Mayo Clinic</td><td class="r">30.6%</td><td class="r">81.5%</td><td class="r">+50.9</td><td class="r">&lt;.001***</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td class="r">25.7%</td><td class="r">96.4%</td><td class="r">+70.7</td><td class="r">&lt;.001***</td></tr>
+    <tr><td>USCIS</td><td class="r">37.7%</td><td class="r">93.1%</td><td class="r">+55.4</td><td class="r">&lt;.001***</td></tr>
+    <tr><td>Rice University</td><td class="r">31.7%</td><td class="r">84.8%</td><td class="r">+53.1</td><td class="r">&lt;.001***</td></tr>
+    <tr class="total"><td>Pooled</td><td class="r">27.6%</td><td class="r">88.2%</td><td class="r">+60.6</td><td class="r">&lt;.001***</td></tr>
+  </table>
+
+  <p>The improvement was consistent across all five AI models tested, with no model showing a negative result on covered facts. This suggests that a well-structured V2 llms.txt guide can reliably transfer factual information to AI responses — at least when the guide covers the relevant fact and the test conditions match those used here.</p>
+
+  <div class="callout">
+    The +60.6pp in-scope improvement is large and consistent across institutions and models in our dataset. The open question is what happens when the guide does not cover the fact being asked about.
+  </div>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>5</span>
+  </div>
+</div>
+
+<!-- ══════════════ V. FINDING 2 ══════════════ -->
+<div class="page" id="s5">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">V. Finding 2 — Incomplete Coverage May Degrade Out-of-Scope Accuracy</h1>
+
+  <p>On facts not covered by the V2 guide, giving the AI the guide appeared to reduce accuracy compared to giving it nothing — in 4 of 5 institutions. Averaged across all institutions, the accuracy drop was −6.4 percentage points (p=0.001, h=−0.154 — modest in size but statistically significant, meaning it is unlikely to be due to chance alone, and it pointed in the same direction in nearly all institutions tested).</p>
+
+  <div class="chart-wrap">
+    <div id="fig2" style="height:340px;"></div>
+    <p class="fig-caption"><strong>Figure 2.</strong> OUT_V2 factual accuracy under no-context (A) and V2 injection conditions, by institution. The dotted line marks the pooled baseline. V2 injection decreases accuracy on uncovered facts in 4 of 5 institutions.</p>
+  </div>
+
+  <table>
+    <tr><th>Institution</th><th class="r">Condition A</th><th class="r">Condition V2</th><th class="r">Change (pp)</th><th class="r">Direction</th></tr>
+    <tr><td>Bakame AI</td><td class="r">32.0%</td><td class="r">28.0%</td><td class="r">−4.0</td><td>Harm ✗</td></tr>
+    <tr><td>Mayo Clinic</td><td class="r">13.5%</td><td class="r">15.0%</td><td class="r">+1.5</td><td>Exception ✓</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td class="r">29.2%</td><td class="r">18.5%</td><td class="r">−10.7</td><td>Harm ✗</td></tr>
+    <tr><td>USCIS</td><td class="r">40.0%</td><td class="r">30.0%</td><td class="r">−10.0</td><td>Harm ✗</td></tr>
+    <tr><td>Rice University</td><td class="r">32.7%</td><td class="r">24.8%</td><td class="r">−7.9</td><td>Harm ✗</td></tr>
+    <tr class="total"><td>Pooled</td><td class="r">29.5%</td><td class="r">23.1%</td><td class="r">−6.4</td><td>Harm ✗ (p=0.001**)</td></tr>
+  </table>
+
+  <p>The mechanism is contextual interference — when the AI receives a guide that discusses topics related to, but not exactly matching, a question, it uses that nearby information anyway, often producing a wrong answer instead of saying it doesn't know. Research on knowledge conflict [5] and context distraction [3] shows that AI models cannot selectively ignore context they have already read — it influences their answers even when it is not directly relevant.</p>
+
+  <p>Mayo Clinic is the one exception (+1.5pp improvement). The Mayo V2 guide uses sufficiently specialized medical language that questions about uncovered topics receive little contamination from the guide's content. This suggests the size of the harm depends on how closely related the uncovered facts are to what the guide does cover.</p>
+
+  <div class="callout">
+    An institution that publishes a llms.txt covering some of its operations should expect that document to actively harm AI accuracy on the topics it does not cover. Publishing an incomplete document is not neutral — it is harmful.
+  </div>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>6</span>
+  </div>
+</div>
+
+<!-- ══════════════ VI. FINDING 3 ══════════════ -->
+<div class="page" id="s6">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">VI. Finding 3 — Prompt-Level Fixes Fail</h1>
+
+  <p>We tested three prompt-level interventions designed to instruct the model to use the V2 document only when relevant:</p>
+
+  <ul>
+    <li><strong>FIX1:</strong> "Use the reference document only if it is directly relevant to the question."</li>
+    <li><strong>FIX2:</strong> "If the document does not address the question, ignore it and answer from your knowledge."</li>
+    <li><strong>FIX3:</strong> Combined FIX1 + FIX2 with explicit scope language.</li>
+  </ul>
+
+  <div class="chart-wrap">
+    <div id="fig4" style="height:360px;"></div>
+    <p class="fig-caption"><strong>Figure 3.</strong> OUT_V2 accuracy under baseline (A), full V2 injection, and three prompt-fix conditions. FIX conditions do not consistently recover baseline accuracy and worsen the harm for some institutions (notably Mayo Clinic).</p>
+  </div>
+
+  <p>None of the three fixes consistently recover accuracy on uncovered facts. For Mayo Clinic, FIX2 and FIX3 reduce accuracy further — the explicit instruction appears to draw the AI's attention to the mismatch between the guide and the question, causing additional confusion rather than appropriate uncertainty.</p>
+
+  <p>This is consistent with the "what is seen cannot be unseen" principle demonstrated by Sun, Bai, and Dredze [5]: once an AI model has read a document, that document influences its output regardless of instructions to ignore it. The fix cannot live inside the prompt — it must be applied before the AI sees the guide at all.</p>
+
+  <div class="callout">
+    In our experiments, instructing the AI to selectively ignore the document after it had already been given did not appear to work reliably. This suggests the intervention may need to happen before the guide reaches the AI — rather than as an instruction inside the prompt.
+  </div>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>7</span>
+  </div>
+</div>
+
+<!-- ══════════════ VII. FINDING 4 ══════════════ -->
+<div class="page" id="s7">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">VII. Finding 4 — Query-Time Gating Recovers Accuracy Without Hurting Recall</h1>
+
+  <p>In our experiments, the most promising approach was to apply a relevance filter (called RAG-style query-time gating) to llms.txt injection. Rather than giving the AI the full guide for every question, the system first scores each incoming question for relevance — and only gives the AI the guide if the question appears to fall within what the guide covers. The question arrives first; the filter scores it; the guide is shown to the AI only if relevant. The AI never sees the filtering decision itself.</p>
+
+  <p>This is not a new technique. It is how every production AI system that uses external documents already works. The novelty here is applying it to llms.txt — a format that was designed under the assumption of always giving the AI the full file.</p>
+
+  <h2 class="sub" id="s7a">A. OPT2: Scope-Aware Injection</h2>
+  <p>OPT2 uses two scoring methods together — keyword matching (BM25) and meaning similarity (cosine similarity) — to decide whether an incoming question is relevant to the guide. Each section of the V2 guide has a short label written as <code>(use for: ...)</code> in its header. When a question arrives, OPT2 scores it against those labels. If the best match score exceeds 0.35, the full guide is given to the AI. If not, the AI answers from its own knowledge without seeing the guide.</p>
+  <div class="diagram-wrap wide"><svg id="mermaid-render-1792255069171-3" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1570.171875px;" viewBox="0 0 1570.171875 260.296875" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mermaid-render-1792255069171-3{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:16px;fill:#ccc;}#mermaid-render-1792255069171-3 .edge-thickness-normal{stroke-width:1px;}#mermaid-render-1792255069171-3 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-render-1792255069171-3 .marker{fill:lightgrey;stroke:lightgrey;}#mermaid-render-1792255069171-3 .label{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#ccc;}#mermaid-render-1792255069171-3 .label text,#mermaid-render-1792255069171-3 span{fill:#ccc;color:#ccc;}#mermaid-render-1792255069171-3 .node rect,#mermaid-render-1792255069171-3 .node circle,#mermaid-render-1792255069171-3 .node ellipse,#mermaid-render-1792255069171-3 .node polygon,#mermaid-render-1792255069171-3 .node path{fill:#1f2020;stroke:#ccc;stroke-width:1px;}#mermaid-render-1792255069171-3 .arrowheadPath{fill:lightgrey;}#mermaid-render-1792255069171-3 .edgePath .path{stroke:lightgrey;stroke-width:1px;}#mermaid-render-1792255069171-3 .flowchart-link{stroke:lightgrey;fill:none;}#mermaid-render-1792255069171-3 .edgeLabel{background-color:hsl(0,0%,34.4%);text-align:center;}#mermaid-render-1792255069171-3 .edgeLabel p{background-color:hsl(0,0%,34.4%);}#mermaid-render-1792255069171-3 .edgeLabel rect{opacity:0.5;background-color:hsl(0,0%,34.4%);fill:hsl(0,0%,34.4%);}#mermaid-render-1792255069171-3 .labelBkg{background-color:rgba(87.75,87.75,87.75,0.5);}#mermaid-render-1792255069171-3 p{margin:0;}</style><g><marker id="mermaid-render-1792255069171-3_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width:1;stroke-dasharray:1,0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M185.438,64.042L195.865,64.042C206.292,64.042,227.146,64.042,247.552,68.298C267.959,72.554,287.918,81.067,297.898,85.323L307.877,89.579" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M223,196.255L227.167,196.255C231.333,196.255,239.667,196.255,253.813,191.999C267.959,187.743,287.918,179.23,297.898,174.974L307.877,170.718" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M533,130.148L579,130.148" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M800.575,103.427L819.191,98.214C837.808,93.001,875.041,82.575,907.153,77.361C939.266,72.148,966.258,72.148,979.754,72.148L993.25,72.148" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M800.575,156.87L819.191,162.083C837.808,167.296,875.041,177.722,916.643,182.935C958.245,188.148,1004.216,188.148,1027.202,188.148L1050.188,188.148" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M1257.25,72.148L1261.417,72.148C1265.583,72.148,1273.917,72.148,1283.858,76.892C1293.8,81.635,1305.349,91.122,1311.124,95.866L1316.899,100.609" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M1200.313,188.148L1213.969,188.148C1227.625,188.148,1254.938,188.148,1274.369,183.405C1293.8,178.661,1305.349,169.174,1311.124,164.431L1316.899,159.687" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path><path d="M1398.469,130.148L1444.469,130.148" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255069171-3_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(912.2734375,72.1484375)"><g class="label" transform="translate(-47.671875,-12)"><foreignObject width="95.34375" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;max-width:200px;text-align:center;" xmlns="http://www.w3.org/1999/xhtml" class="labelBkg"><span class="edgeLabel"><p>Yes, in scope</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(912.2734375,188.1484375)"><g class="label" transform="translate(-59.9765625,-12)"><foreignObject width="119.953125" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;max-width:200px;text-align:center;" xmlns="http://www.w3.org/1999/xhtml" class="labelBkg"><span class="edgeLabel"><p>No, out of scope</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" transform="translate(115.5,64.042)"><rect class="basic label-container" x="-69.9375" y="-27" width="139.875" height="54"></rect><g class="label" transform="translate(-39.9375,-12)"><foreignObject width="79.875" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>User query</p></span></div></foreignObject></g></g><g class="node default" transform="translate(403,130.148)"><rect class="basic label-container" x="-130" y="-39" width="260" height="78"></rect><g class="label" transform="translate(-100,-24)"><foreignObject width="200" height="48"><div style="display:table;white-space:break-spaces;line-height:1.5;max-width:200px;text-align:center;width:200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Hybrid scorer: BM25 + cosine</p></span></div></foreignObject></g></g><g class="node default" transform="translate(115.5,196.255)"><path d="M0,15.809 a107.5,15.809 0,0,0 215,0 a107.5,15.809 0,0,0 -215,0 l0,78.809 a107.5,15.809 0,0,0 215,0 l0,-78.809" class="basic label-container outer-path" transform="translate(-107.5,-55.213)"></path><g class="label" transform="translate(-100,-14)"><foreignObject width="200" height="48"><div style="display:table;white-space:break-spaces;line-height:1.5;max-width:200px;text-align:center;width:200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>V2 section annotations: use-for tags = index</p></span></div></foreignObject></g></g><g class="node default" transform="translate(705.148,130.148)"><polygon points="122.148,0 244.297,-122.148 122.148,-244.297 0,-122.148" class="label-container" transform="translate(-121.648,122.148)"></polygon><g class="label" transform="translate(-95.148,-12)"><foreignObject width="190.297" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Max section score &gt; 0.35?</p></span></div></foreignObject></g></g><g class="node default" transform="translate(1127.25,72.148)"><rect class="basic label-container" x="-130" y="-39" width="260" height="78"></rect><g class="label" transform="translate(-100,-24)"><foreignObject width="200" height="48"><div style="display:table;white-space:break-spaces;line-height:1.5;max-width:200px;text-align:center;width:200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Inject full V2 document into system prompt</p></span></div></foreignObject></g></g><g class="node default" transform="translate(1127.25,188.148)"><rect class="basic label-container" x="-73.063" y="-27" width="146.125" height="54"></rect><g class="label" transform="translate(-43.063,-12)"><foreignObject width="86.125" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>No injection</p></span></div></foreignObject></g></g><g class="node default" transform="translate(1352.859,130.148)"><rect class="basic label-container" x="-45.609" y="-27" width="91.219" height="54"></rect><g class="label" transform="translate(-15.609,-12)"><foreignObject width="31.219" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>LLM</p></span></div></foreignObject></g></g><g class="node default" transform="translate(1505.32,130.148)"><rect class="basic label-container" x="-56.852" y="-27" width="113.703" height="54"></rect><g class="label" transform="translate(-26.852,-12)"><foreignObject width="53.703" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Answer</p></span></div></foreignObject></g></g></g></g></g></svg></div>
+  <p class="diagram-caption"><strong>Figure 0b.</strong> OPT2 query-time gating pipeline — the query is scored before the model sees anything.</p>
+
+  <h2 class="sub" id="s7b">B. OPT3: Section-Level Retrieval</h2>
+  <p>OPT3 takes a different approach: instead of giving the AI the entire guide, it picks only the top 2 most relevant sections and gives those. The idea is to give the AI less, so it sees only what it needs. In practice, two sections turned out to be too few to cover most in-scope questions.</p>
+
+  <div class="chart-wrap">
+    <div id="fig5" style="height:380px;"></div>
+    <p class="fig-caption"><strong>Figure 4.</strong> IN_V2 recall (left group) and OUT_V2 accuracy (right group) across conditions A, V2, OPT2, and OPT3. OPT2 preserves recall while recovering out-of-scope accuracy. OPT3 collapses IN_V2 recall at k=2.</p>
+  </div>
+
+  <h2 class="sub" id="s7c">C. Significance Testing</h2>
+
+  <table>
+    <tr><th>Institution</th><th class="r">OPT2 vs A<br>(OUT_V2)</th><th class="r">p</th><th class="r">OPT2 vs V2<br>(IN_V2)</th><th class="r">p</th></tr>
+    <tr><td>Bakame AI</td><td class="r">+2.0pp</td><td class="r">ns</td><td class="r">−4.2pp</td><td class="r">ns ✓</td></tr>
+    <tr><td>Mayo Clinic</td><td class="r">−2.4pp</td><td class="r">ns</td><td class="r">−2.5pp</td><td class="r">ns ✓</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td class="r">−8.5pp</td><td class="r">ns</td><td class="r">+0.7pp</td><td class="r">ns ✓</td></tr>
+    <tr><td>USCIS</td><td class="r">−6.2pp</td><td class="r">ns</td><td class="r">−0.8pp</td><td class="r">ns ✓</td></tr>
+    <tr><td>Rice University</td><td class="r">−6.1pp</td><td class="r">ns</td><td class="r">−0.7pp</td><td class="r">ns ✓</td></tr>
+    <tr class="total"><td>Pooled</td><td class="r">−5.0pp</td><td class="r">0.0098**</td><td class="r">−1.3pp</td><td class="r">0.233 ns ✓</td></tr>
+  </table>
+  <p style="font-size:9.5pt;color:#444;margin-top:-8px;margin-bottom:16px;">✓ = recall preserved (not significantly different from V2). ns = not significant. Ideal: OUT_V2 vs A = ns; IN_V2 vs V2 = ns.</p>
+
+  <p>OPT2 reduced the accuracy drop on uncovered facts in 3 out of 5 institutions. Across all institutions combined, uncovered-fact accuracy was still 5.0pp lower than no guide at all (p=0.0098) — the filter is not perfect, because some questions slip through even when they shouldn't. On the other hand, accuracy on facts the guide does cover barely changed: only 1.3pp lower than always giving the full guide, which is close enough to zero to be noise (p=0.233). OPT3, which gives the AI only the top 2 guide sections instead of the whole file, performed much worse — accuracy on covered facts dropped by 32.8pp, meaning two sections are simply not enough.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>8</span>
+  </div>
+</div>
+
+<!-- ══════════════ VIII. TUNING ══════════════ -->
+<div class="page" id="s8">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">VIII. Threshold Tuning and Classifier Experiments</h1>
+
+  <h2 class="sub" id="s8a">A. Threshold Sweep (T20–T45)</h2>
+  <p>The threshold is the sensitivity cutoff that decides whether a question is relevant enough to get the guide. We tested five different cutoff values (0.20, 0.25, 0.30, 0.40, 0.45) in addition to the original 0.35, across all five institutions. Results below are averaged across institutions.</p>
+
+  <table>
+    <tr><th>Condition</th><th class="r">IN_V2 Recall</th><th class="r">OUT_V2 Accuracy</th><th class="r">vs. A (OUT_V2)</th></tr>
+    <tr><td>A (baseline)</td><td class="r">26.4%</td><td class="r">29.5%</td><td class="r">—</td></tr>
+    <tr><td>V2 (full inject)</td><td class="r">88.2%</td><td class="r">23.3%</td><td class="r">−6.2pp</td></tr>
+    <tr><td>T20</td><td class="r">87.4%</td><td class="r">22.8%</td><td class="r">−6.7pp</td></tr>
+    <tr><td>T25</td><td class="r">87.9%</td><td class="r">25.4%</td><td class="r">−4.1pp</td></tr>
+    <tr><td>T30</td><td class="r">86.5%</td><td class="r">24.7%</td><td class="r">−4.8pp</td></tr>
+    <tr class="shaded"><td>OPT2 (T35)</td><td class="r">86.8%</td><td class="r">25.3%</td><td class="r">−4.2pp</td></tr>
+    <tr><td>T40</td><td class="r">86.1%</td><td class="r">22.9%</td><td class="r">−6.6pp</td></tr>
+    <tr><td>T45</td><td class="r">87.4%</td><td class="r">24.5%</td><td class="r">−5.0pp</td></tr>
+  </table>
+
+  <p>No single cutoff was best at everything. Lower cutoffs (like T25) let more questions through to get the guide, which is good for covered facts but allows more uncovered questions to slip in too. Higher cutoffs (like T40) block more questions, which is better for uncovered facts but risks blocking some that should have gotten the guide. The original 0.35 cutoff fell within 1–2 percentage points of the best setting on both measures, suggesting it is a reasonable starting point. Results varied by institution, which points to a possible improvement: rather than one cutoff for everyone, a system that learns the right cutoff per institution would likely do better.</p>
+
+  <h2 class="sub" id="s8b">B. Top-k Sweep (K3–K5)</h2>
+  <p>OPT3 is a different strategy: instead of giving the AI the full guide or nothing, it picks the most relevant guide sections and gives only those. We tested giving 2, 3, 4, or 5 sections (k=2 through k=5).</p>
+  <p>The problem: 2 sections is not enough. The AI misses most of the covered facts because they are spread across many sections of the guide. Giving it 5 sections gets closer to full accuracy on covered facts — but then we are almost back to giving the AI the whole guide, which reintroduces the harm on uncovered facts.</p>
+  <p>There is no sweet spot. Every value of k either misses too many covered facts or lets in too many uncovered ones. The relevance filter (OPT2) handled this tradeoff better than selecting sections did.</p>
+
+  <div class="chart-wrap">
+    <div id="fig7" style="height:320px;"></div>
+    <p class="fig-caption"><strong>Figure 5.</strong> Pink line = accuracy on facts the guide covers. Blue line = accuracy on facts the guide does not cover. Left half: different cutoff values (T20–T45). Right half: different numbers of sections given to the AI (K2–K5). The dramatic dip at K2 is where giving only 2 sections causes the AI to miss most covered facts. No setting is best on both lines at once.</p>
+  </div>
+
+  <h2 class="sub" id="s8c">C. Real-World Replication — Bakame Published llms.txt</h2>
+  <p>Every experiment so far used guide documents we wrote ourselves for each institution. That raises a fair question: do the same results hold when using a real llms.txt file that an institution actually published? To check, we downloaded Bakame AI's live guide from bakame.online/llms.txt (as of October 2026) and ran the same set of test questions on it.</p>
+
+  <p>The real file turned out to cover slightly more facts than our synthetic version — 21 out of 29 test facts, compared to 19 out of 29 for the version we wrote. Two facts in the live file were not in ours: details about Bakame Aviation's English proficiency standard, and the shared Kinyarwanda voice-AI setup.</p>
+
+  <table>
+    <tr><th>Subset</th><th>Condition</th><th class="r">Synthetic V2</th><th class="r">Real llms.txt</th><th class="r">Replicates?</th></tr>
+    <tr><td>IN-scope</td><td>A (baseline)</td><td class="r">6.3%</td><td class="r">8.6%</td><td class="r">—</td></tr>
+    <tr><td>IN-scope</td><td>V2 / REAL_V2</td><td class="r">85.3%</td><td class="r">54.3%</td><td class="r">—</td></tr>
+    <tr class="shaded"><td>IN-scope</td><td>Lift</td><td class="r">+79.0pp</td><td class="r">+45.7pp</td><td class="r">✓ Yes</td></tr>
+    <tr><td>OUT-scope</td><td>A (baseline)</td><td class="r">32.0%</td><td class="r">32.5%</td><td class="r">—</td></tr>
+    <tr><td>OUT-scope</td><td>V2 / REAL_V2</td><td class="r">28.0%</td><td class="r">20.0%</td><td class="r">—</td></tr>
+    <tr class="shaded"><td>OUT-scope</td><td>Harm</td><td class="r">−4.0pp</td><td class="r">−12.5pp</td><td class="r">✓ Yes (stronger)</td></tr>
+  </table>
+
+  <p>Both main findings held on the real file. The guide still improved accuracy on facts it covers, and still hurt accuracy on facts it does not cover. The harm was actually stronger on the real file (−12.5pp drop vs −4.0pp on our synthetic version). One possible reason: a guide written by the institution itself tends to use more specific, detailed language, which may cause the AI to lean on it more heavily — even when the question is about something the guide does not cover.</p>
+
+  <h2 class="sub" id="s8d">D. Scope Classifier Experiments (OPT4 — OPT4_263)</h2>
+  <p>OPT2 works, but it requires two things: section labels written in a specific format (<code>use for: ...</code>) and a manually chosen cutoff value. Both require effort to set up for each new institution. We wanted to know if a machine learning model could learn to make that relevance decision automatically — without needing the labels or the manual tuning. We ran four experiments (OPT4, OPT4v2, OPT5, OPT4_263), each trying a slightly different approach.</p>
+
+  <p><strong>OPT4 — Training a small AI model to decide relevance.</strong> We trained DistilBERT — a small, fast text-classification model — on 233 labeled examples to predict whether a given question is in scope for the guide. To check how well it generalizes, we trained on four institutions and tested on the fifth, repeating this five times (one per institution). Accuracy on uncovered facts averaged 29.9%, roughly matching the no-guide baseline (29.5%). The downside: it was too aggressive at blocking questions, so accuracy on covered facts dropped to 71.5% — well below the 88.2% achieved by always giving the guide.</p>
+
+  <table>
+    <tr><th>Institution</th><th class="r">A</th><th class="r">V2</th><th class="r">OPT2</th><th class="r">OPT4</th></tr>
+    <tr><td>Bakame AI</td><td class="r">32.0%</td><td class="r">28.0%</td><td class="r">34.0%</td><td class="r">42.0%</td></tr>
+    <tr><td>Mayo Clinic</td><td class="r">13.5%</td><td class="r">15.0%</td><td class="r">11.2%</td><td class="r">13.5%</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td class="r">29.2%</td><td class="r">18.5%</td><td class="r">20.8%</td><td class="r">19.2%</td></tr>
+    <tr><td>USCIS</td><td class="r">40.0%</td><td class="r">30.0%</td><td class="r">33.8%</td><td class="r">37.7%</td></tr>
+    <tr><td>Rice University</td><td class="r">32.7%</td><td class="r">24.8%</td><td class="r">26.7%</td><td class="r">37.0%</td></tr>
+    <tr class="total"><td>Mean</td><td class="r">29.5%</td><td class="r">23.3%</td><td class="r">25.3%</td><td class="r">29.9%</td></tr>
+  </table>
+  <p style="font-size:9.5pt;color:#444;margin-top:-8px;margin-bottom:16px;">OUT_V2 accuracy by condition. OPT4 matches the A baseline mean and leads on 3 of 5 institutions.</p>
+
+  <p><strong>OPT4v2 — Adding AI-generated training examples.</strong> We tried giving OPT4 more training data by having an AI label 273 additional examples, bringing the total to 506. More data usually helps — but here it made things worse. Accuracy on uncovered facts dropped to 26.2% and covered-fact accuracy fell to 76.8%. The AI-labeled examples were too noisy: the labeler made systematic mistakes on borderline cases, and the model learned those mistakes instead of the right pattern.</p>
+
+  <p><strong>OPT5 — A simpler model, same data.</strong> Instead of DistilBERT, we tried a lighter approach: convert each question into a numerical meaning vector (sentence embedding), then train a simple statistical classifier on top. This was faster and simpler, but performed worse — barely better than random guessing (49.8% accuracy). With only 233 examples, the simpler model did not have enough to learn from.</p>
+
+  <p><strong>OPT4_263 — More hand-labeled examples.</strong> We added 30 more carefully hand-labeled examples (bringing the total to 263) and re-ran the DistilBERT approach on a dedicated GPU. Accuracy improved to 70% in cross-validation testing. Accuracy on uncovered facts reached 28.4% — close to the no-guide baseline (29.5%) — but covered-fact accuracy was still only 70.0%, well below what always-injecting achieves (88.2%).</p>
+
+  <table>
+    <tr><th>Institution</th><th class="r">OPT4</th><th class="r">OPT4v2</th><th class="r">OPT5</th><th class="r">OPT4_263</th></tr>
+    <tr><td>Bakame AI</td><td class="r">42.0%</td><td class="r">28.0%</td><td class="r">20.0%</td><td class="r">38.0%</td></tr>
+    <tr><td>Mayo Clinic</td><td class="r">13.5%</td><td class="r">13.5%</td><td class="r">11.5%</td><td class="r">12.4%</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td class="r">19.2%</td><td class="r">27.7%</td><td class="r">26.5%</td><td class="r">23.1%</td></tr>
+    <tr><td>USCIS</td><td class="r">37.7%</td><td class="r">30.8%</td><td class="r">29.5%</td><td class="r">34.6%</td></tr>
+    <tr><td>Rice University</td><td class="r">37.0%</td><td class="r">30.9%</td><td class="r">24.7%</td><td class="r">33.9%</td></tr>
+    <tr class="total"><td>Mean (OUT_V2)</td><td class="r">29.9%</td><td class="r">26.2%</td><td class="r">22.4%</td><td class="r">28.4%</td></tr>
+    <tr class="total"><td>Mean (IN_V2)</td><td class="r">71.5%</td><td class="r">76.8%</td><td class="r">54.0%</td><td class="r">70.0%</td></tr>
+  </table>
+  <p style="font-size:9.5pt;color:#444;margin-top:-8px;margin-bottom:16px;">Classifier experiment comparison. Goal: OUT_V2 ≥ A (29.5%); IN_V2 recall ≈ V2 (88.2%). No condition meets both goals simultaneously.</p>
+
+  <div class="callout">
+    The classifier experiments appear to hit a data ceiling. 263 labeled examples produce 70% cross-validation accuracy — enough to suggest the concept is feasible, but seemingly insufficient to meet both accuracy goals simultaneously in deployment. In our tests, the bottleneck appeared to be data size rather than model architecture, though more experiments would be needed to confirm this.
+  </div>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>10</span>
+  </div>
+</div>
+
+<!-- ══════════════ IX. FAILURE MODE ANALYSIS ══════════════ -->
+<div class="page" id="s9fm">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">IX. Failure Mode Analysis — Why Do Uncovered Facts Fail?</h1>
+
+  <p>Section V established that giving the AI the guide reduces accuracy on uncovered facts. This section asks a more precise question: <em>how</em> does the AI fail — does it give a wrong answer confidently, or does it simply say it doesn't know? And which types of facts are most likely to be missing from an institution's guide in the first place?</p>
+
+  <p>We analyzed 2,604 verdict records across all five institutions and both baseline conditions (A = no guide, V2 = guide injected), using the three-way verdict system: <strong>A = correct</strong>, <strong>B = wrong answer stated confidently</strong>, <strong>C = fact not addressed</strong> (the AI hedged or said it didn't know).</p>
+
+  <h2 class="sub" id="s9a">A. The Injection Paradox: Confident Wrong Answers Increase</h2>
+
+  <p>Without the guide, AI models fail on uncovered facts by giving a wrong answer 48.1% of the time and declining to answer 23.6% of the time. When the guide is given, the picture shifts dramatically: wrong answers climb to 70.7% while non-answers drop to just 6.8%.</p>
+
+  <table>
+    <tr><th>Condition</th><th class="r">n</th><th class="r">Correct (A)</th><th class="r">Wrong / confident (B)</th><th class="r">Not addressed (C)</th></tr>
+    <tr><td>No guide (A)</td><td class="r">645</td><td class="r">28.4%</td><td class="r">48.1%</td><td class="r">23.6%</td></tr>
+    <tr class="shaded"><td>With guide (V2)</td><td class="r">622</td><td class="r">22.5%</td><td class="r">70.7%</td><td class="r">6.8%</td></tr>
+  </table>
+
+  <p>Giving the AI the guide suppresses uncertainty. The model reads the guide, finds content that is nearby but not identical to the question, and produces a confident wrong answer instead of admitting it doesn't know. To quantify this directly, we matched each fact×model pair across both conditions and tracked how the verdict changed:</p>
+
+  <table>
+    <tr><th>Transition (No guide → With guide)</th><th class="r">Count</th><th class="r">%</th></tr>
+    <tr><td>Wrong → still wrong (B → B)</td><td class="r">270</td><td class="r">43.4%</td></tr>
+    <tr class="shaded"><td>Silent → confidently wrong (C → B)</td><td class="r">90</td><td class="r">14.5%</td></tr>
+    <tr><td>Correct → still correct (A → A)</td><td class="r">89</td><td class="r">14.3%</td></tr>
+    <tr><td>Correct → wrong (A → B)</td><td class="r">80</td><td class="r">12.9%</td></tr>
+    <tr><td>Wrong → correct (B → A)</td><td class="r">34</td><td class="r">5.5%</td></tr>
+    <tr><td>Silent → correct (C → A)</td><td class="r">17</td><td class="r">2.7%</td></tr>
+  </table>
+
+  <p>In 14.5% of uncovered-fact cases, the guide converted a silent non-answer into a confident wrong answer. In 12.9% of cases, the guide turned a correct answer into a wrong one. The guide fixed wrong answers (B→A + C→A) in only 8.2% of cases. The net effect: the guide makes things worse on uncovered facts not by subtly degrading accuracy, but by actively suppressing the AI's natural uncertainty.</p>
+
+  <div class="callout">
+    In our experiments, the guide didn't just fail to help on uncovered facts — it appeared to make the AI more confidently wrong. This pattern, which we call the injection paradox, suggests that the same document that improves accuracy on covered facts may actively suppress appropriate uncertainty on uncovered ones. Whether this generalizes beyond this study warrants further investigation.
+  </div>
+
+  <h2 class="sub" id="s9b">B. Which Fact Categories Are Systematically Uncovered?</h2>
+
+  <p>Our 263 test facts were scraped from each institution's public website and Wikipedia, then automatically sorted into topic categories (such as history, financials, alumni, etc.) by GPT-4o-mini during the fact extraction step. We then checked which of those facts actually appeared in each institution's llms.txt guide. The table below shows which categories were consistently missing — not covered in the guide — across all five institutions.</p>
+
+  <table>
+    <tr><th>Category</th><th class="r">Total facts</th><th class="r">Not in guide</th><th class="r">Miss rate</th></tr>
+    <tr><td>Training / Education programs</td><td class="r">9</td><td class="r">9</td><td class="r">100%</td></tr>
+    <tr><td>Recognition / Awards</td><td class="r">7</td><td class="r">7</td><td class="r">100%</td></tr>
+    <tr><td>Operations / Processes</td><td class="r">4</td><td class="r">4</td><td class="r">100%</td></tr>
+    <tr><td>Alumni</td><td class="r">5</td><td class="r">4</td><td class="r">80%</td></tr>
+    <tr><td>Leadership / Personnel</td><td class="r">7</td><td class="r">5</td><td class="r">71%</td></tr>
+    <tr><td>History</td><td class="r">27</td><td class="r">19</td><td class="r">70%</td></tr>
+    <tr><td>Research</td><td class="r">12</td><td class="r">8</td><td class="r">67%</td></tr>
+    <tr><td>Financials / Fees</td><td class="r">29</td><td class="r">18</td><td class="r">62%</td></tr>
+    <tr><td>Identity / Core mission</td><td class="r">13</td><td class="r">0</td><td class="r">0%</td></tr>
+    <tr><td>Product / Service offerings</td><td class="r">5</td><td class="r">0</td><td class="r">0%</td></tr>
+  </table>
+  <p style="font-size:9.5pt;color:#444;margin-top:-8px;margin-bottom:16px;">Selected categories. Identity and product facts are almost always covered; history, operations, and recognition almost never are.</p>
+
+  <p>The pattern makes sense: institutions tend to write their llms.txt to answer the most common questions about what they are and what they offer — mission, products, services. They rarely document their history, internal processes, awards, or staff. But those are exactly the kinds of things users actually ask about. And based on our findings, those are now the questions the AI is most likely to answer confidently and incorrectly when given the guide.</p>
+
+  <h2 class="sub" id="s9c">C. Which Categories Trigger the Most Confident Wrong Answers?</h2>
+
+  <p>Among uncovered facts, the type of fact predicts how the AI fails. Some categories trigger almost exclusively confident wrong answers (B); others produce more uncertainty (C).</p>
+
+  <table>
+    <tr><th>Category</th><th class="r">n</th><th class="r">Correct</th><th class="r">Wrong (B)</th><th class="r">Silent (C)</th></tr>
+    <tr><td>Alumni</td><td class="r">20</td><td class="r">0%</td><td class="r">100%</td><td class="r">0%</td></tr>
+    <tr><td>Operations</td><td class="r">20</td><td class="r">5%</td><td class="r">90%</td><td class="r">5%</td></tr>
+    <tr><td>Leadership</td><td class="r">24</td><td class="r">17%</td><td class="r">83%</td><td class="r">0%</td></tr>
+    <tr><td>Deals / Partnerships</td><td class="r">30</td><td class="r">10%</td><td class="r">83%</td><td class="r">7%</td></tr>
+    <tr><td>Facilities</td><td class="r">32</td><td class="r">13%</td><td class="r">88%</td><td class="r">0%</td></tr>
+    <tr><td>History</td><td class="r">93</td><td class="r">38%</td><td class="r">59%</td><td class="r">3%</td></tr>
+    <tr><td>Financials / Fees</td><td class="r">89</td><td class="r">28%</td><td class="r">65%</td><td class="r">7%</td></tr>
+  </table>
+  <p style="font-size:9.5pt;color:#444;margin-top:-8px;margin-bottom:16px;">Failure mode distribution for uncovered facts under condition V2 (with guide). B = confident wrong answer; C = fact not addressed.</p>
+
+  <p>Alumni facts produce a 100% confident-wrong rate — the AI always fabricates a plausible-sounding answer rather than acknowledging uncertainty. Operations and facilities follow at 88–90%. These categories are high-stakes: an AI confidently stating wrong information about an institution's alumni network, internal processes, or physical locations creates reputational and accuracy risks that a silent non-answer would not.</p>
+
+  <h2 class="sub" id="s9d">D. Does a Longer Guide Mean Better Coverage?</h2>
+
+  <p>One might expect that institutions with longer guides would have fewer uncovered facts. The data does not support this. Across the five institutions, guide length (in words) is negatively correlated with coverage rate (r = −0.66): longer guides do not predict better coverage of the facts institutions care about.</p>
+
+  <table>
+    <tr><th>Institution</th><th class="r">Guide length (words)</th><th class="r">Facts covered</th><th class="r">Facts not covered</th></tr>
+    <tr><td>Bakame AI</td><td class="r">489</td><td class="r">65.5%</td><td class="r">34.5%</td></tr>
+    <tr><td>Mayo Clinic</td><td class="r">550</td><td class="r">48.5%</td><td class="r">51.5%</td></tr>
+    <tr><td>Rice University</td><td class="r">625</td><td class="r">46.8%</td><td class="r">53.2%</td></tr>
+    <tr><td>Vinson &amp; Elkins</td><td class="r">660</td><td class="r">51.9%</td><td class="r">48.1%</td></tr>
+    <tr><td>USCIS</td><td class="r">699</td><td class="r">50.0%</td><td class="r">50.0%</td></tr>
+  </table>
+
+  <p>Bakame AI has the shortest guide and the highest coverage rate — because its guide was written with a specific audience (investors and partners) in mind. The other four institutions have longer guides but lower coverage, because length was added without a clear scope definition. This reinforces the practical recommendation in Section XI: scope your guide to a specific audience's questions, not to all knowable facts about your institution.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>11</span>
+  </div>
+</div>
+
+<!-- ══════════════ X. SPEC RECOMMENDATION ══════════════ -->
+<div class="page" id="s9">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">X. Spec Recommendation — <code>covers:</code> and <code>excludes:</code> Fields</h1>
+
+  <p>The llms.txt specification [8] says nothing about how AI systems should decide when to use the file at the moment of answering a question (inference time). The current design — a static file served at <code>/llms.txt</code> — provides no mechanism for question-aware filtering. An AI system following the spec as written would give the AI the full file for every question it receives.</p>
+
+  <p>Our relevance filter (OPT2) requires <code>(use for: ...)</code> labels in section headers — scope signals we manually added to our research documents, and which Bakame AI independently added to their real published file. The fact that both a controlled research document and a real production document converged on this same labeling pattern suggests that publishers intuitively recognize the need for scope signals. The specification should formalize this practice.</p>
+
+  <p>We propose two new metadata fields in the llms.txt specification:</p>
+  <div class="diagram-wrap wide"><svg id="mermaid-render-1792255071223-5" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width:1056.328125px;" viewBox="0 0 1056.328125 174" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mermaid-render-1792255071223-5{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:16px;fill:#ccc;}#mermaid-render-1792255071223-5 .edge-thickness-normal{stroke-width:1px;}#mermaid-render-1792255071223-5 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-render-1792255071223-5 .marker{fill:lightgrey;stroke:lightgrey;}#mermaid-render-1792255071223-5 .label{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#ccc;}#mermaid-render-1792255071223-5 .label text,#mermaid-render-1792255071223-5 span{fill:#ccc;color:#ccc;}#mermaid-render-1792255071223-5 .node rect,#mermaid-render-1792255071223-5 .node circle,#mermaid-render-1792255071223-5 .node ellipse,#mermaid-render-1792255071223-5 .node polygon,#mermaid-render-1792255071223-5 .node path{fill:#1f2020;stroke:#ccc;stroke-width:1px;}#mermaid-render-1792255071223-5 .arrowheadPath{fill:lightgrey;}#mermaid-render-1792255071223-5 .edgePath .path{stroke:lightgrey;stroke-width:1px;}#mermaid-render-1792255071223-5 .flowchart-link{stroke:lightgrey;fill:none;}#mermaid-render-1792255071223-5 .edgeLabel{background-color:hsl(0,0%,34.4%);text-align:center;}#mermaid-render-1792255071223-5 .edgeLabel p{background-color:hsl(0,0%,34.4%);}#mermaid-render-1792255071223-5 .labelBkg{background-color:rgba(87.75,87.75,87.75,0.5);}#mermaid-render-1792255071223-5 p{margin:0;}</style><g><marker id="mermaid-render-1792255071223-5_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width:1;stroke-dasharray:1,0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M176.82,60L188.669,55.833C200.518,51.667,224.216,43.333,246.035,39.167C267.854,35,287.794,35,297.764,35L307.734,35" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255071223-5_flowchart-v2-pointEnd)"></path><path d="M176.82,114L188.669,118.167C200.518,122.333,224.216,130.667,244.704,134.833C265.193,139,282.471,139,291.111,139L299.75,139" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255071223-5_flowchart-v2-pointEnd)"></path><path d="M472.719,35L478.216,35C483.714,35,494.708,35,509.909,38.917C525.11,42.834,544.516,50.668,554.22,54.586L563.923,58.503" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255071223-5_flowchart-v2-pointEnd)"></path><path d="M480.703,139L484.87,139C489.036,139,497.37,139,511.24,135.083C525.11,131.166,544.516,123.332,554.22,119.414L563.923,115.497" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255071223-5_flowchart-v2-pointEnd)"></path><path d="M738.328,87L784.328,87" class="edge-thickness-normal edge-pattern-solid flowchart-link" marker-end="url(#mermaid-render-1792255071223-5_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(247.914,35)"><g class="label" transform="translate(-30.836,-12)"><foreignObject width="61.672" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml" class="labelBkg"><span class="edgeLabel"><p>declares</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(247.914,139)"><g class="label" transform="translate(-30.836,-12)"><foreignObject width="61.672" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml" class="labelBkg"><span class="edgeLabel"><p>declares</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" transform="translate(100.039,87)"><rect class="basic label-container" x="-92.039" y="-27" width="184.078" height="54"></rect><g class="label" transform="translate(-62.039,-12)"><foreignObject width="124.078" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Publisher llms.txt</p></span></div></foreignObject></g></g><g class="node default" transform="translate(392.227,35)"><rect class="basic label-container" x="-80.492" y="-27" width="160.984" height="54"></rect><g class="label" transform="translate(-50.492,-12)"><foreignObject width="100.984" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>covers: topics</p></span></div></foreignObject></g></g><g class="node default" transform="translate(392.227,139)"><rect class="basic label-container" x="-88.477" y="-27" width="176.953" height="54"></rect><g class="label" transform="translate(-58.477,-12)"><foreignObject width="116.953" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>excludes: topics</p></span></div></foreignObject></g></g><g class="node default" transform="translate(634.516,87)"><rect class="basic label-container" x="-103.813" y="-27" width="207.625" height="54"></rect><g class="label" transform="translate(-73.813,-12)"><foreignObject width="147.625" height="24"><div style="display:table-cell;white-space:nowrap;line-height:1.5;text-align:center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Consumer-side gate</p></span></div></foreignObject></g></g><g class="node default" transform="translate(918.328,87)"><rect class="basic label-container" x="-130" y="-39" width="260" height="78"></rect><g class="label" transform="translate(-100,-24)"><foreignObject width="200" height="48"><div style="display:table;white-space:break-spaces;line-height:1.5;max-width:200px;text-align:center;width:200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Inject / skip decision per query</p></span></div></foreignObject></g></g></g></g></g></svg></div>
+  <p class="diagram-caption"><strong>Figure 0c.</strong> Proposed publisher-declared scope: <code>covers:</code> and <code>excludes:</code> fields enable consumer-side gating without custom classifiers.</p>
+
+  <pre># llms.txt — proposed extension
+
+> covers: admissions, financial aid,
+  student life, academic programs
+
+> excludes: research funding, faculty
+  credentials, endowment, hiring
+
+> audience: prospective undergraduate students
+
+> scope-version: 1.0</pre>
+
+  <p>The <code>covers:</code> field declares the topics the document addresses. The <code>excludes:</code> field explicitly marks topics that are intentionally absent. The <code>audience:</code> field scopes the query population the document is optimized for. Together, these fields enable AI consumers to implement query-time gating without engineering their own scope classifiers — the publisher declares scope, the consumer enforces it.</p>
+
+  <p>This is not a new architectural concept. It mirrors how robots.txt's <code>Disallow:</code> field works for crawlers: the publisher declares what is out of scope; the consumer is expected to respect that declaration. The parallel is intentional — llms.txt is positioned as an AI-era successor to robots.txt, and should inherit its publisher-declared scope model.</p>
+
+  <p>If the specification adopts <code>covers:</code> and <code>excludes:</code>, the OPT2 relevance filter becomes substantially simpler: instead of inferring scope from annotation text, the filter reads the publisher-declared topics directly. This reduces the engineering burden on AI consumers from "build a scope classifier" to "read a field."</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>10</span>
+  </div>
+</div>
+
+<!-- ══════════════ X. PRACTICAL GUIDANCE ══════════════ -->
+<div class="page" id="s10">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">XI. Practical Guidance</h1>
+
+  <p>The key insight from this study is that coverage completeness is relative to the intended use case, not to the totality of knowable facts about an institution. A complete llms.txt for an enrollment goal means every question a prospective student is likely to ask is answered — not every fact about the university.</p>
+
+  <table>
+    <tr><th>Institution type</th><th>Primary audience</th><th>Topics to cover</th><th>Risk if incomplete</th></tr>
+    <tr><td>University</td><td>Prospective students</td><td>Admissions, financial aid, housing, programs</td><td>Low if query volume outside scope is low</td></tr>
+    <tr><td>Hospital / Clinic</td><td>Patients, referrers</td><td>Services, locations, insurance, wait times</td><td>Medium — health queries are high stakes</td></tr>
+    <tr><td>Law firm</td><td>Clients, recruits</td><td>Practice areas, offices, compensation</td><td>High if financial/legal data omitted</td></tr>
+    <tr><td>Government agency</td><td>Public / applicants</td><td>Fees, forms, processing times, eligibility</td><td>High — very broad query surface</td></tr>
+    <tr><td>AI startup</td><td>Investors, partners</td><td>Product, team, awards, access</td><td>Low — undisclosed items are often intentional</td></tr>
+  </table>
+
+  <p>Based on our preliminary findings, we offer four tentative suggestions. These are not prescriptions — they are starting points drawn from a single study with five institutions, and further research is needed before they can be treated as established guidance.</p>
+
+  <p><strong>Preliminary suggestion 1 — Think about scope before writing.</strong> It may help to define who will be asking questions and what they are likely to ask before writing the guide. A document written for a specific audience and use case appears more likely to be complete enough to avoid the harm we observed — though this has not been tested directly.</p>
+
+  <p><strong>Preliminary suggestion 2 — Be cautious with incomplete guides.</strong> In our experiments, a guide that did not fully cover its topic appeared to reduce AI accuracy on uncovered questions. If a guide cannot cover the intended use case reasonably well, it may be worth waiting until relevance filtering (gating) is in place before publishing. This is a caution, not a rule — real-world conditions will vary.</p>
+
+  <p><strong>Preliminary suggestion 3 — Query-time filtering may be worth exploring.</strong> Our OPT2 experiment suggests that checking whether a question is relevant to the guide before deciding to give it to the AI could help reduce harm on uncovered facts, while mostly preserving accuracy on covered ones. More testing across different institutions, file formats, and AI systems would be needed before this could be broadly recommended.</p>
+
+  <p><strong>Preliminary suggestion 4 — The llms.txt spec may benefit from scope declarations.</strong> In our experiments, adding short scope labels to guide sections (<code>use for: ...</code>) was what made OPT2's relevance filter work. That is essentially what <code>covers:</code> and <code>excludes:</code> fields would do at the document level — declare scope so AI consumers don't have to guess it. We tested the mechanism; what we have not tested is how it would work if built into the spec itself and adopted by real AI tools at scale. That remains an open question.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>11</span>
+  </div>
+</div>
+
+<!-- ══════════════ XI. LIMITATIONS ══════════════ -->
+<div class="page" id="s11">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">XII. Limitations and Future Work</h1>
+
+  <p><strong>L1 — Judge reliability.</strong> Using GPT-4o-mini as the automated accuracy judge introduces potential bias. The judge may share blind spots with the models it is evaluating (both are transformer-based language models trained on similar data), and the way the judge is prompted affects how it distributes verdicts. Future work should include human annotation on a representative sample (n≥100) to validate how closely the automated judge agrees with human raters (measured by Cohen's kappa, a standard inter-rater agreement statistic).</p>
+
+  <p><strong>L2 — Threshold generalization.</strong> The threshold sweep (Section VIII) shows no universally optimal sensitivity setting — T25 through T40 perform within 2pp on averaged metrics, but institution-level variation is high. A classifier that learns per-institution thresholds from a small set of labeled examples (domain-adaptive) would be preferable to the single global threshold used here.</p>
+
+  <p><strong>L3 — OPT3 ceiling.</strong> Section-level retrieval recovers recall only partially at K5 (85.1% vs OPT2's 86.8%) while not improving OUT_V2 accuracy. Improved section chunking, re-ranking, or multi-vector retrieval may unlock the approach. The current implementation is not viable below K5 and is outperformed by threshold gating at all k values tested.</p>
+
+  <p><strong>L4 — No real-world consumer measurement.</strong> All experiments simulate inference-time injection via system prompt. Real AI consumer behavior — whether Perplexity, ChatGPT, Cursor, or other tools fetch and inject llms.txt automatically — was not measured directly. Confirmed automatic llms.txt adoption remains low as of October 2026; the harm documented here is prospective, not observed in production.</p>
+
+  <p><strong>L5 — Five institutions.</strong> Domain diversity is reasonable but not exhaustive. Replication with additional institution types (e.g., retail, non-profit, media) is needed before claims of universality. The Mayo Clinic exception (positive OUT_V2 direction) warrants further investigation.</p>
+
+  <p><strong>L6 — English only.</strong> All V2 documents and probe questions are in English. Cross-lingual effects on scope harm are unknown. The effect may be larger or smaller in languages with weaker parametric knowledge coverage.</p>
+
+  <p><strong>L7 — Synthetic documents.</strong> Four of five institutions use researcher-authored V2 documents, not published files. The real-world replication (Bakame) showed stronger harm on the published file, suggesting synthetic documents may underestimate the production effect.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>12</span>
+  </div>
+</div>
+
+<!-- ══════════════ XII. CONCLUSION ══════════════ -->
+<div class="page" id="s12">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">XIII. Conclusion</h1>
+
+  <p>This study offers preliminary evidence that an accurate, well-structured llms.txt V2 guide may reduce AI accuracy on questions it does not cover. In our experiments, the effect appeared statistically significant (p=0.001, meaning unlikely to be due to chance alone), was observed across 4 of 5 institutions, and persisted after prompt-level interventions. It also appeared in a real published llms.txt file, not only in researcher-authored documents.</p>
+
+  <p>This finding does not undermine the value of llms.txt. Giving an AI a well-structured guide appeared to dramatically improve accuracy on covered facts (+60.6pp, p&lt;.001), consistent with Study 1 and extending it across five institutions and five models. Rather, the finding suggests a potential structural gap in the current standard: there is no mechanism for institutions to declare what their guide covers, and no mechanism for AI systems to check relevance before using it.</p>
+
+  <p>A relevance filter — treating llms.txt as a document to retrieve from selectively rather than a header to inject always (treating it as a RAG corpus rather than a static header) — appeared to substantially reduce accuracy harm on uncovered facts while preserving accuracy on covered ones (−1.3pp, not statistically significant). The approach uses infrastructure similar to what modern AI retrieval pipelines already employ.</p>
+
+  <p>The spec extension we propose — <code>covers:</code> and <code>excludes:</code> fields — could complement this approach. It would shift the responsibility for declaring scope from AI systems (who would have to infer it) to publishers (who already know it), potentially making the standard safer to use even when the guide is incomplete — which appears to be common in practice.</p>
+
+  <p>The practical takeaway from our experiments: <strong>scope your llms.txt to your audience's questions, not to all facts about your institution. Consider filtering at the time of the query. Declare scope in the document.</strong> A targeted, complete guide for one use case appeared more valuable — and less harmful — than a broad, incomplete one.</p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>13</span>
+  </div>
+</div>
+
+<!-- ══════════════ REFERENCES ══════════════ -->
+<div class="page" id="refs">
+  <div class="rh">
+    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
+    <span>Technical Report</span>
+  </div>
+
+  <h1 class="sec">References</h1>
+
+  <p style="font-size:10pt;line-height:1.9;">[1] Niyorurema, H. &amp; Estella, M.H. In-Context Format Effects of llms.txt-Structured Institutional Text: A Multi-Model Empirical Study. <em>Working paper.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[2] Aggarwal, P., et al. (2024). GEO: Generative Engine Optimization. <em>KDD 2024.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[3] Shi, F., et al. (2023). Large Language Models Can Be Easily Distracted by Irrelevant Context. <em>ICML 2023.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[4] Cuconasu, F., et al. (2024). The Power of Noise: Redefining Retrieval for RAG. <em>SIGIR 2024.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[5] Sun, K., Bai, F. &amp; Dredze, M. (2025). What Is Seen Cannot Be Unseen: The Disruptive Effect of Knowledge Conflict on Large Language Models. <em>arXiv:2506.06485.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[6] Longpre, S., et al. (2021). Entity-Based Knowledge Conflicts in Question Answering. <em>EMNLP 2021.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[7] Singh, I.S., et al. (2024). ChunkRAG: Novel LLM-Chunk Filtering Method for RAG Systems. <em>arXiv:2410.19572.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[8] Howard, J. &amp; Answer.AI. (2024). llms.txt: A proposed standard. <em>llmstxt.org.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[9] Illyes, G. (2025). Statement at Google Search Central Live Deep Dive. Reported by Schwartz, B., <em>Search Engine Roundtable,</em> July 2025.</p>
+  <p style="font-size:10pt;line-height:1.9;">[10] Liu, N.F., et al. (2024). Lost in the Middle. <em>TACL 12.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[11] Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. <em>NeurIPS 33.</em></p>
+  <p style="font-size:10pt;line-height:1.9;">[12] Petroni, F., et al. (2019). Language Models as Knowledge Bases? <em>EMNLP 2019.</em></p>
+
+  <div class="footer">
+    <span>BurnettBench Research</span>
+    <span>14</span>
+  </div>
+</div>
+
+<!-- ══════════════ CHARTS ══════════════ -->
+<script>
+const institutions = ['Bakame AI','Mayo Clinic','Vinson & Elkins','USCIS','Rice University'];
+const cleanLayout = {
+  font:{family:"Inter, -apple-system, Arial, sans-serif", size:11},
+  paper_bgcolor:'#fff', plot_bgcolor:'#fff',
+  margin:{t:20,b:80,l:60,r:20},
+  legend:{orientation:'h',y:-0.22,font:{size:10}},
+  yaxis:{gridcolor:'#ebebeb', tickfont:{size:10}},
+  xaxis:{tickfont:{size:10}}
+};
+
+const cfg = {staticPlot:true, displayModeBar:false};
+
+// Fig 1 — IN_V2
+Plotly.newPlot('fig1', [
+  {name:'No Context (A)', type:'bar', x:institutions,
+   y:[6.3,30.6,25.7,37.7,31.7], marker:{color:'#dce8f5'}},
+  {name:'V2 Injection', type:'bar', x:institutions,
+   y:[85.3,81.5,96.4,93.1,84.8], marker:{color:'#7bafd4'}}
+], {...cleanLayout, barmode:'group', height:340,
+  yaxis:{...cleanLayout.yaxis, title:'Factual Accuracy (%)', range:[0,110]},
+  annotations:[{x:2,y:102,text:'p<.001 across all institutions',showarrow:false,font:{size:10,color:'#333'}}]
+}, cfg);
+
+// Fig 2 — OUT_V2
+Plotly.newPlot('fig2', [
+  {name:'No Context (A)', type:'bar', x:institutions,
+   y:[32.0,13.5,29.2,40.0,32.7], marker:{color:'#dce8f5'}},
+  {name:'V2 Injection', type:'bar', x:institutions,
+   y:[28.0,15.0,18.5,30.0,24.8], marker:{color:'#a8c8e8'}}
+], {...cleanLayout, barmode:'group', height:340,
+  yaxis:{...cleanLayout.yaxis, title:'Out-of-Scope Accuracy (%)', range:[0,55]},
+  shapes:[{type:'line',x0:-0.5,x1:4.5,y0:29.5,y1:29.5,
+           line:{color:'#aaa',dash:'dot',width:1.5}}],
+  annotations:[
+    {x:2,y:52,text:'Pooled: −6.4pp (p=0.001)',showarrow:false,font:{size:10,color:'#555'}},
+    {x:1,y:17,text:'Exception',showarrow:true,ay:-20,ax:25,font:{size:9,color:'#333'}}
+  ]
+}, cfg);
+
+// Fig 3 — Fix experiment (OUT_V2)
+const fixConds = ['A','V2','FIX1','FIX2','FIX3'];
+const fixColors = ['#dce8f5','#a8c8e8','#7bafd4','#5a95c0','#3d7aaa'];
+const fixData = {
+  'Bakame AI':      [32.0,28.0,18.0,32.0,26.0],
+  'Mayo Clinic':    [13.5,15.0,8.1,5.5,3.3],
+  'V&E':            [29.2,18.5,20.0,15.5,13.5],
+  'USCIS':          [40.0,30.0,33.1,33.3,28.8],
+  'Rice University':[32.7,24.8,21.8,22.7,23.5]
+};
+const fig4traces = fixConds.map((c,i) => ({
+  name:c, type:'bar',
+  x:Object.keys(fixData),
+  y:Object.values(fixData).map(v=>v[i]),
+  marker:{color:fixColors[i]}
+}));
+Plotly.newPlot('fig4', fig4traces, {...cleanLayout, barmode:'group', height:360,
+  yaxis:{...cleanLayout.yaxis, title:'OUT_V2 Accuracy (%)', range:[0,55]},
+  annotations:[{x:1,y:50,text:'FIX2/FIX3 further harm Mayo',showarrow:true,
+               ax:50,ay:-25,font:{size:9,color:'#555'}}]
+}, cfg);
+
+// Fig 4 — Gating (OPT2/OPT3)
+const gateConds = ['A','V2','OPT2','OPT3'];
+const gateColors = ['#dce8f5','#a8c8e8','#7bafd4','#5a95c0'];
+const inData  = [[6.3,30.6,25.7,37.7,31.7],[85.3,81.5,96.4,93.1,84.8],
+                 [81.1,79.4,97.1,92.3,84.1],[72.6,50.0,53.6,53.1,54.5]];
+const outData = [[32.0,13.5,29.2,40.0,32.7],[28.0,15.0,18.5,30.0,24.8],
+                 [34.0,11.2,20.8,33.8,26.7],[32.0,14.7,27.7,31.5,27.9]];
+const insts5  = institutions.map(i=>i+' (IN)');
+const insts5o = institutions.map(i=>i+' (OUT)');
+const fig5traces = gateConds.map((c,ci) => ({
+  name:c, type:'bar', x:[...insts5,...insts5o],
+  y:[...inData[ci],...outData[ci]], marker:{color:gateColors[ci]}
+}));
+Plotly.newPlot('fig5', fig5traces, {...cleanLayout, barmode:'group', height:380,
+  yaxis:{...cleanLayout.yaxis, title:'Accuracy (%)', range:[0,115]},
+  xaxis:{...cleanLayout.xaxis, tickangle:-30},
+  legend:{...cleanLayout.legend, y:-0.28},
+  margin:{t:20,b:110,l:60,r:20},
+  shapes:[{type:'line',x0:4.5,x1:4.5,y0:0,y1:115,
+           line:{color:'#aaa',dash:'dash',width:1.5}}],
+  annotations:[
+    {x:2,y:110,text:'IN_V2 recall',showarrow:false,font:{size:10,color:'#333'}},
+    {x:7,y:110,text:'OUT_V2 accuracy',showarrow:false,font:{size:10,color:'#333'}}
+  ]
+}, cfg);
+
+// Fig 5 — Threshold/k sweep
+const sweepConds = ['T20','T25','T30','T35\n(OPT2)','T40','T45','K2\n(OPT3)','K3','K4','K5'];
+const sweepIN  = [87.4,87.9,86.5,86.8,86.1,87.4,56.8,77.2,81.5,85.1];
+const sweepOUT = [22.8,25.4,24.7,25.3,22.9,24.5,26.8,26.7,25.7,25.0];
+Plotly.newPlot('fig7', [
+  {name:'IN_V2 Recall', type:'scatter', mode:'lines+markers',
+   x:sweepConds, y:sweepIN, marker:{color:'#e8a0a0',size:7}, line:{color:'#e8a0a0'}},
+  {name:'OUT_V2 Accuracy', type:'scatter', mode:'lines+markers',
+   x:sweepConds, y:sweepOUT, marker:{color:'#a8c8e8',size:7}, line:{color:'#a8c8e8'}},
+  {name:'V2 recall ceiling (88.2%)', type:'scatter', mode:'lines',
+   x:sweepConds, y:Array(10).fill(88.2),
+   line:{color:'#e8a0a0',dash:'dot',width:1}, showlegend:true},
+  {name:'Baseline OUT_V2 (29.5%)', type:'scatter', mode:'lines',
+   x:sweepConds, y:Array(10).fill(29.5),
+   line:{color:'#a8c8e8',dash:'dot',width:1}, showlegend:true}
+], {...cleanLayout, height:320,
+  yaxis:{...cleanLayout.yaxis, title:'Accuracy (%, pooled)', range:[15,100]},
+  xaxis:{...cleanLayout.xaxis, title:'Condition'},
+  shapes:[{type:'line',x0:5.5,x1:5.5,y0:15,y1:100,
+           line:{color:'#ccc',dash:'dash',width:1}}],
+  annotations:[
+    {x:2.5,y:95,text:'← Threshold sweep',showarrow:false,font:{size:9,color:'#666'}},
+    {x:8,y:95,text:'Top-k sweep →',showarrow:false,font:{size:9,color:'#666'}},
+    {x:6,y:52,text:'OPT3 (K2)\nrecall collapse',showarrow:true,ay:25,ax:0,font:{size:8,color:'#555'}}
+  ]
+}, cfg);
+</script>
+</body>
+</html>

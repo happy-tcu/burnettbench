@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BurnettBench Study 2 — README</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; font-size: 11pt; line-height: 1.7; color: #111; background: #e8e8e8; }
+.page { max-width: 840px; margin: 40px auto 60px; padding: 56px 72px 72px; background: #fff; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
+h1 { font-size: 28pt; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 8px; }
+h2 { font-size: 14pt; font-weight: 600; margin: 40px 0 12px; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
+h3 { font-size: 11pt; font-weight: 600; margin: 24px 0 8px; }
+p { margin-bottom: 12px; }
+.subtitle { font-size: 11pt; color: #555; margin-bottom: 48px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 10pt; }
+th { background: #f0f5fa; color: #333; font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 2px solid #d0dce8; }
+td { padding: 9px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+code { font-family: 'Courier New', monospace; font-size: 9.5pt; background: #f5f5f5; padding: 1px 5px; border-radius: 3px; }
+pre { background: #f5f5f5; border-left: 3px solid #000; padding: 14px 18px; font-family: 'Courier New', monospace; font-size: 9.5pt; line-height: 1.6; margin: 12px 0 20px; overflow-x: auto; }
+.callout { border-left: 3px solid #7bafd4; padding: 12px 16px; background: #f0f5fa; margin: 20px 0; font-size: 10.5pt; }
+.tag { display: inline-block; font-size: 8.5pt; font-weight: 600; padding: 2px 8px; border-radius: 3px; margin-right: 4px; }
+.tag-data { background: #dce8f5; color: #2a5a8a; }
+.tag-script { background: #d8f0dc; color: #256030; }
+.tag-output { background: #f5ecd8; color: #7a4f10; }
+.tag-report { background: #ede8f5; color: #4a2a8a; }
+ul { padding-left: 20px; margin-bottom: 12px; }
+li { margin-bottom: 6px; }
+.step { display: flex; gap: 16px; margin-bottom: 16px; }
+.step-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #111; color: #fff; font-size: 10pt; font-weight: 600; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+.step-body { flex: 1; }
+.step-body strong { display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>BurnettBench — Study 2</h1>
+  <p class="subtitle">Scope Coverage Effects in llms.txt V2 · Replication Package · October 2026<br>
+  Happy Herman Niyorurema &nbsp;·&nbsp; Maricar Hastings Estella (Research Supervisor)<br>
+  Department of Communications and Strategy, Anne Burnett Marion School of Medicine, TCU</p>
+
+  <div class="callout">
+    This folder contains everything needed to read, understand, and replicate the study. Open <code>burnettbench_technical_report.html</code> first — it is fully self-contained.
+  </div>
+
+  <h2>What this study is</h2>
+  <p>BurnettBench Study 2 measures what happens when an AI is given an llms.txt V2 guide that does not fully cover all possible questions about an institution. We tested five institutions, five AI models, and 263 ground-truth facts across six experimental conditions (A, V2, FIX1–3, OPT2, OPT3) plus a classifier experiment series (OPT4, OPT4v2, OPT5, OPT4_263).</p>
+  <p>The main finding: giving the AI an incomplete guide <em>reduces</em> accuracy on facts the guide does not cover, and the failure mode is confident wrong answers — not hedging.</p>
+
+  <h2>Institutions and models</h2>
+  <table>
+    <tr><th>ID</th><th>Institution</th><th>Guide type</th></tr>
+    <tr><td><code>bakame</code></td><td>Bakame AI</td><td>Synthetic V2 + real published file (bakame.online/llms.txt)</td></tr>
+    <tr><td><code>mayo</code></td><td>Mayo Clinic</td><td>Synthetic V2</td></tr>
+    <tr><td><code>ve</code></td><td>Vinson &amp; Elkins</td><td>Synthetic V2</td></tr>
+    <tr><td><code>uscis</code></td><td>USCIS</td><td>Synthetic V2</td></tr>
+    <tr><td><code>rice</code></td><td>Rice University</td><td>Synthetic V2</td></tr>
+  </table>
+  <p><strong>Models:</strong> qwen3-14b, gpt-4o-mini, llama-3.1-70b, claude-haiku-4-5, gemini-flash (all via OpenRouter API)</p>
+  <p><strong>Judge:</strong> GPT-4o-mini (automated accuracy verdict: A = correct, B = confidently wrong, C = not addressed)</p>
+
+  <h2>Folder structure</h2>
+  <pre>burnettbench_study2/
+├── README.html                         ← this file
+├── burnettbench_technical_report.html  ← full report (self-contained)
+│
+├── guides/       ← llms.txt V2 guide documents
+├── probes/       ← ground-truth facts and probe questions
+├── results/      ← all experiment verdicts and results
+├── scripts/      ← all Python scripts
+├── models/       ← trained classifier checkpoints (.pt files)
+├── assets/       ← SVG diagram source files
+└── study1/       ← Study 1 paper, concept note, and slides</pre>
+
+  <h2>File map</h2>
+
+  <h3>guides/ <span class="tag tag-data">data</span></h3>
+  <table>
+    <tr><th>File</th><th>What it is</th></tr>
+    <tr><td><code>burnettbench_{iid}_llmstxt_v2.txt</code></td><td>V2 llms.txt guide used for injection — 5 files, one per institution</td></tr>
+    <tr><td><code>burnettbench_bakame_llmstxt_real.txt</code></td><td>Bakame AI's live published llms.txt (fetched October 2026)</td></tr>
+  </table>
+
+  <h3>probes/ <span class="tag tag-data">data</span></h3>
+  <table>
+    <tr><th>File</th><th>What it is</th></tr>
+    <tr><td><code>burnettbench_{iid}_groundtruth.jsonl</code></td><td>Original scraped ground-truth facts</td></tr>
+    <tr><td><code>burnettbench_{iid}_groundtruth_full.jsonl</code></td><td>Expanded with IN_V2 / OUT_V2 labels</td></tr>
+    <tr><td><code>burnettbench_{iid}_groundtruth_extended.jsonl</code></td><td>Further extended with category labels</td></tr>
+    <tr><td><code>burnettbench_{iid}_factprobes_full.jsonl</code></td><td>Final probe questions — canonical benchmark input</td></tr>
+    <tr><td><code>burnettbench_{iid}_synthetic_queries.jsonl</code></td><td>AI-generated queries used for OPT4v2 classifier training</td></tr>
+    <tr><td><code>burnettbench_opt4_synthetic_all.jsonl</code></td><td>Pooled synthetic queries across all institutions</td></tr>
+  </table>
+
+  <h3>results/ <span class="tag tag-output">output</span></h3>
+  <table>
+    <tr><th>File pattern</th><th>Condition</th></tr>
+    <tr><td><code>burnettbench_{iid}_factprobe_verdicts_full.jsonl</code></td><td>Main benchmark — conditions A and V2 (all models)</td></tr>
+    <tr><td><code>burnettbench_{iid}_fix_verdicts.jsonl</code></td><td>FIX1–3 prompt intervention conditions</td></tr>
+    <tr><td><code>burnettbench_{iid}_gating_verdicts.jsonl</code></td><td>OPT2 relevance filter (BM25+cosine, threshold 0.35)</td></tr>
+    <tr><td><code>burnettbench_{iid}_gating_tune_verdicts.jsonl</code></td><td>Threshold sweep (T20–T45)</td></tr>
+    <tr><td><code>burnettbench_{iid}_ksweep_verdicts.jsonl</code></td><td>OPT3 top-k section sweep (K2–K5)</td></tr>
+    <tr><td><code>burnettbench_{iid}_andgate_verdicts.jsonl</code></td><td>AND-gate combination condition</td></tr>
+    <tr><td><code>burnettbench_{iid}_opt4_verdicts.jsonl</code></td><td>OPT4 — DistilBERT classifier on 233 GT examples</td></tr>
+    <tr><td><code>burnettbench_{iid}_opt4v2_verdicts.jsonl</code></td><td>OPT4v2 — DistilBERT + AI-generated training data</td></tr>
+    <tr><td><code>burnettbench_{iid}_OPT5_verdicts.jsonl</code></td><td>OPT5 — SentenceTransformer + logistic regression</td></tr>
+    <tr><td><code>burnettbench_bakame_real_verdicts.jsonl</code></td><td>Real llms.txt replication (Bakame only)</td></tr>
+  </table>
+
+  <h3>scripts/ <span class="tag tag-script">scripts</span></h3>
+  <table>
+    <tr><th>Script</th><th>What it does</th></tr>
+    <tr><td><code>burnettbench_scrape_and_generate.py</code></td><td>Scrapes institutional websites, extracts atomic facts, labels IN_V2/OUT_V2</td></tr>
+    <tr><td><code>burnettbench_expand_groundtruth.py</code></td><td>Adds category labels and generates probe questions</td></tr>
+    <tr><td><code>burnettbench_merge_groundtruth.py</code></td><td>Merges extended facts into final factprobe files</td></tr>
+    <tr><td><code>burnettbench_institutions.py</code></td><td>Shared config — institution IDs, names, model list</td></tr>
+    <tr><td><code>burnettbench_eval_factprobe_full.py</code></td><td>Main benchmark — conditions A and V2</td></tr>
+    <tr><td><code>burnettbench_eval_fix.py</code></td><td>FIX1–3 prompt intervention conditions</td></tr>
+    <tr><td><code>burnettbench_eval_gating.py</code></td><td>OPT2 relevance filter</td></tr>
+    <tr><td><code>burnettbench_eval_gating_tune.py</code></td><td>Threshold sweep (T20–T45)</td></tr>
+    <tr><td><code>burnettbench_eval_ksweep.py</code></td><td>OPT3 top-k section sweep</td></tr>
+    <tr><td><code>burnettbench_eval_andgate.py</code></td><td>AND-gate combination condition</td></tr>
+    <tr><td><code>burnettbench_eval_opt4.py</code></td><td>OPT4 classifier gate benchmark</td></tr>
+    <tr><td><code>burnettbench_eval_significance_outv2.py</code></td><td>Significance testing — OUT_V2 findings</td></tr>
+    <tr><td><code>burnettbench_eval_significance_gating.py</code></td><td>Significance testing — OPT2 vs A and OPT2 vs V2</td></tr>
+    <tr><td><code>burnettbench_eval_independence.py</code></td><td>Model independence check</td></tr>
+    <tr><td><code>burnettbench_retrain_opt4.py</code></td><td>Trains OPT4 DistilBERT classifier (leave-one-out CV)</td></tr>
+    <tr><td><code>burnettbench_retrain_opt4_fast.py</code></td><td>Faster OPT4 training for iteration</td></tr>
+    <tr><td><code>burnettbench_opt4_263.py</code></td><td>OPT4_263 — DistilBERT on full 263 GT examples (GPU recommended)</td></tr>
+    <tr><td><code>burnettbench_opt5.py</code></td><td>OPT5 — SentenceTransformer + logistic regression</td></tr>
+    <tr><td><code>burnettbench_bakame_real_replication.py</code></td><td>Real llms.txt replication for Bakame</td></tr>
+    <tr><td><code>burnettbench_failure_analysis.py</code></td><td>Failure mode analysis — B vs C rates, injection paradox, category gaps</td></tr>
+  </table>
+
+  <h3>models/ <span class="tag tag-output">output</span></h3>
+  <p>Trained DistilBERT classifier checkpoints (<code>.pt</code> files) from OPT4 and OPT4v2 — one per institution per experiment. Generated by <code>burnettbench_retrain_opt4.py</code>.</p>
+
+  <h3>assets/</h3>
+  <p>SVG source files for the flowcharts in the report (<code>diagram (2).svg</code>, <code>diagram (3).svg</code>). These are already inlined in the HTML report — kept here for reference.</p>
+
+  <h3>study1/ <span class="tag tag-report">Study 1</span></h3>
+  <p>Source documents from the prior study that this work extends.</p>
+  <table>
+    <tr><th>File</th><th>What it is</th></tr>
+    <tr><td><code>BurnettBench_ConceptNote.pdf</code></td><td>Original concept note — motivation and design for the BurnettBench research program</td></tr>
+    <tr><td><code>geo_llmstxt by HH and MHE.pdf</code></td><td>Study 1 paper — "In-Context Format Effects of llms.txt-Structured Institutional Text: A Multi-Model Empirical Study"</td></tr>
+    <tr><td><code>burnettbench_slides.pptx</code></td><td>Study 1 presentation slides (editable)</td></tr>
+    <tr><td><code>burnettbench_slides.pdf</code></td><td>Study 1 presentation slides (PDF)</td></tr>
+  </table>
+
+  <h3>Report</h3>
+  <table>
+    <tr><th>File</th><th>What it is</th></tr>
+    <tr><td><code>burnettbench_technical_report.html</code></td><td>Full technical report — self-contained, open in any browser, no external dependencies</td></tr>
+  </table>
+
+  <h2>How to replicate</h2>
+
+  <div class="callout">
+    You need Python 3.10+, an OpenRouter API key (set as <code>OPENROUTER_API_KEY</code>), and the packages below. The classifier experiments (OPT4_263) require a GPU — they were run on an NVIDIA GB10 (DGX Spark).
+  </div>
+
+  <pre>pip install openai rank_bm25 sentence-transformers scikit-learn transformers torch requests beautifulsoup4</pre>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <strong>Scrape facts and build probes</strong>
+      Run <code>burnettbench_scrape_and_generate.py</code> for each institution, then <code>burnettbench_expand_groundtruth.py</code>, then <code>burnettbench_merge_groundtruth.py</code>. This regenerates the <code>*_factprobes_full.jsonl</code> files. <em>Skip this step if you want to use the existing probe files.</em>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <strong>Run the main benchmark</strong>
+      <code>python burnettbench_eval_factprobe_full.py</code> — runs conditions A (no guide) and V2 (full guide injected) across all five institutions and five models. Outputs <code>*_factprobe_verdicts_full.jsonl</code>.
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <strong>Run intervention conditions</strong>
+      Run in any order: <code>burnettbench_eval_fix.py</code> (FIX1–3), <code>burnettbench_eval_gating.py</code> (OPT2), <code>burnettbench_eval_gating_tune.py</code> (threshold sweep), <code>burnettbench_eval_ksweep.py</code> (top-k sweep).
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <strong>Run classifier experiments</strong>
+      <code>python burnettbench_retrain_opt4.py</code> (OPT4), <code>python burnettbench_opt5.py</code> (OPT5), <code>python burnettbench_opt4_263.py</code> (OPT4_263 — GPU recommended).
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <strong>Run failure mode analysis</strong>
+      <code>python burnettbench_failure_analysis.py</code> — prints the full failure mode breakdown: B vs C rates, injection paradox transition matrix, category coverage gaps.
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <strong>Run significance tests</strong>
+      <code>python burnettbench_eval_significance_outv2.py</code> and <code>python burnettbench_eval_significance_gating.py</code> — outputs p-values for the main findings.
+    </div>
+  </div>
+
+  <h2>Key numbers to reproduce</h2>
+  <table>
+    <tr><th>Finding</th><th>Value</th><th>Source file</th></tr>
+    <tr><td>IN_V2 accuracy lift (A → V2)</td><td>+60.6pp, p&lt;.001</td><td><code>*_factprobe_verdicts_full.jsonl</code></td></tr>
+    <tr><td>OUT_V2 accuracy harm (A → V2)</td><td>−6.4pp, p=0.001</td><td><code>*_factprobe_verdicts_full.jsonl</code></td></tr>
+    <tr><td>OPT2 IN_V2 recall vs V2</td><td>−1.3pp, p=0.233 (ns)</td><td><code>*_gating_verdicts.jsonl</code></td></tr>
+    <tr><td>OPT2 OUT_V2 vs A</td><td>−5.0pp, p=0.0098</td><td><code>*_gating_verdicts.jsonl</code></td></tr>
+    <tr><td>Injection paradox (C→B transition)</td><td>14.5% of matched pairs</td><td><code>burnettbench_failure_analysis.py</code></td></tr>
+    <tr><td>OPT4_263 CV accuracy</td><td>70.0%</td><td><code>burnettbench_opt4_263.py</code> log</td></tr>
+    <tr><td>Real file harm (Bakame OUT)</td><td>−12.5pp</td><td><code>burnettbench_bakame_real_verdicts.jsonl</code></td></tr>
+  </table>
+
+  <h2>Contact</h2>
+  <p>Happy Herman Niyorurema — <code>h.niyorurema@tcu.edu</code><br>
+  Maricar Hastings Estella (Research Supervisor) — <code>m.estella@tcu.edu</code><br>
+  Department of Communications and Strategy, Anne Burnett Marion School of Medicine, TCU</p>
+
+</div>
+</body>
+</html>
