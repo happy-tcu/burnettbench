@@ -24,6 +24,71 @@ BurnettBench Study 2 measures what happens when an AI is given an `llms.txt` V2 
 
 Full report: [`burnettbench_technical_report.html`](burnettbench_technical_report.html) (self-contained, open in any browser).
 
+## Study pipeline
+
+How the data moves from public sources through the benchmark to the final verdicts:
+
+```mermaid
+flowchart LR
+    S1[Wikipedia pages<br/>Mayo · V&E]
+    S2[Institution sites<br/>rice.edu · uscis.gov<br/>velaw.com · bakame.online]
+    S3[Hand-curated<br/>seed facts]
+
+    S1 --> E[GPT-4o-mini<br/>fact extractor]
+    S2 --> E
+    E --> F[263 ground-truth facts]
+    S3 --> F
+
+    F --> L[IN_V2 / OUT_V2<br/>scope labeling]
+    L --> P[Probe questions]
+
+    P --> R[5 models × 12 conditions<br/>34,997 generations]
+    R --> J[GPT-4o-mini judge]
+    J --> V[A / B / C verdicts]
+
+    V --> A1[Significance tests]
+    V --> A2[Failure-mode analysis]
+    V --> A3[Classifier training<br/>OPT4 · OPT5]
+```
+
+## Experimental conditions
+
+The 12 conditions differ in **how** the `llms.txt` guide is delivered to the model — from no guide at all, to full injection, to several forms of query-time filtering:
+
+```mermaid
+flowchart LR
+    Q[User question] --> R{Routing by<br/>condition}
+
+    R -->|A — baseline| M1[Model with<br/>no guide]
+    R -->|V2 — blind injection| M2[Model with<br/>full llms.txt]
+    R -->|FIX1–3| M3[Model with llms.txt<br/>+ scope prompt]
+
+    R -->|OPT2| G[Relevance gate<br/>BM25 + cosine @ 0.35]
+    G -->|above threshold| M2
+    G -->|below threshold| M1
+
+    R -->|OPT3| K[Top-k section<br/>retrieval k=2..5] --> M4[Model with<br/>k sections]
+
+    R -->|OPT4 · OPT4v2 · OPT5| CL[Learned scope<br/>classifier]
+    CL -->|in-scope| M2
+    CL -->|out-of-scope| M1
+```
+
+## The injection paradox
+
+Why giving the model a guide can make it *more* confidently wrong, not just marginally less accurate, on uncovered facts:
+
+```mermaid
+flowchart LR
+    Q[Uncovered question] --> B1[Baseline — no guide]
+    Q --> B2[With llms.txt]
+
+    B1 --> R1["48.1% confident wrong (B)<br/>23.6% silent (C)<br/>28.4% correct (A)"]
+    B2 --> R2["70.7% confident wrong (B)<br/>6.8% silent (C)<br/>22.5% correct (A)"]
+
+    R1 -. "14.5% C→B transition<br/>(silent becomes confident wrong)" .-> R2
+```
+
 ## Repository layout
 
 ```
