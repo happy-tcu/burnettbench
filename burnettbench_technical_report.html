@@ -3,208 +3,615 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BurnettBench — Scope Coverage Effects in llms.txt V2 — Technical Report</title>
+<title>Scope Coverage Effects in llms.txt V2 — BurnettBench Research</title>
 <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* ── OpenAI-style page shell ── */
+:root {
+  --ink: #0d0d0d;
+  --ink-strong: #262626;
+  --ink-body: #343434;
+  --ink-muted: #6b6b6b;
+  --ink-faint: #9c9c9c;
+  --rule: #ededed;
+  --surface: #ffffff;
+  --bg: #ffffff;
+  --accent: #1E60E4;
+  --pill-black: #0d0d0d;
+  --pill-gray: #f1f1f1;
+  --font-sans: 'Söhne', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.7; color: #000; background: #e8e8e8; }
-
-/* ── Cover ── */
-.cover {
-  max-width: 840px;
-  margin: 40px auto 0;
-  padding: 64px 72px 80px;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-body);
+  background: var(--bg);
 }
-.cover-org { font-size: 14pt; font-weight: 700; letter-spacing: -0.01em; }
-.cover-band { margin-top: 120px; }
-.cover-title { font-size: 40pt; font-weight: 300; line-height: 1.15; letter-spacing: -0.02em; }
-.cover-type { font-size: 13pt; font-weight: 400; color: #333; margin-top: 18px; }
-.cover-meta { margin-top: 64px; font-size: 10pt; color: #444; line-height: 1.8; }
-.cover-meta .author-name { font-size: 11pt; font-weight: 500; }
-.cover-meta .author-name .lname { text-transform: uppercase; }
-.cover-meta .author-role { font-size: 10pt; color: #555; font-weight: 400; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--ink-faint); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--ink); color: var(--ink); }
 
-/* ── Page wrapper ── */
-.page {
-  max-width: 840px;
-  margin: 0 auto;
-  padding: 52px 72px 72px;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+/* ── Top navigation ── */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px; background: var(--surface);
+  border-bottom: 1px solid transparent;
+}
+.nav-left { display: flex; align-items: center; gap: 40px; }
+.nav-logo { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+.nav-links { display: flex; gap: 28px; }
+.nav-links a { font-size: 15px; color: var(--ink); text-decoration: none; }
+.nav-links a:hover { color: var(--ink-muted); }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-search-btn {
+  width: 36px; height: 36px; border-radius: 999px; border: none;
+  background: transparent; cursor: pointer; color: var(--ink);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.nav-search-btn:hover { background: var(--pill-gray); }
+.nav-search-btn svg { width: 20px; height: 20px; opacity: 0.75; }
+
+/* Search bar (slides down below nav) */
+.search-bar {
+  position: sticky; top: 70px; z-index: 49;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+.search-bar[hidden] { display: none !important; }
+.search-bar input {
+  flex: 1; max-width: 640px;
+  border: none; outline: none;
+  font-family: inherit; font-size: 16px; color: var(--ink);
+  background: var(--pill-gray);
+  padding: 12px 16px; border-radius: 999px;
+}
+.search-bar input:focus { background: #e8e8e8; }
+.search-meta { font-size: 13px; color: var(--ink-muted); min-width: 80px; }
+.search-bar button#searchClose {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 22px; line-height: 1; color: var(--ink-muted);
+  width: 32px; height: 32px; border-radius: 50%;
+}
+.search-bar button#searchClose:hover { background: var(--pill-gray); color: var(--ink); }
+
+/* Yellow highlight on matched text */
+mark.search-hit { background: #fff3c4; color: inherit; padding: 1px 2px; border-radius: 2px; }
+mark.search-hit.current { background: #ffd66a; }
+.nav-btn { font-size: 15px; padding: 10px 18px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; font-weight: 400; }
+.nav-btn-light { background: var(--pill-gray); color: var(--ink); }
+.nav-btn-dark  { background: var(--pill-black); color: #fff; }
+.nav-btn-light:hover { background: #e4e4e4; }
+.nav-btn-dark:hover  { background: #262626; }
+
+/* ── Article hero ── */
+.hero { padding: 48px 32px 24px; max-width: 1280px; margin: 0 auto; text-align: center; }
+.hero-date { font-size: 14px; color: var(--ink-muted); margin-bottom: 28px; }
+.hero-title {
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  max-width: 980px;
+  margin: 0 auto 40px;
+}
+.hero-ctas { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+.cta {
+  font-size: 15px; font-weight: 400;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.cta-dark  { background: var(--pill-black); color: #fff; }
+.cta-light { background: var(--pill-gray);  color: var(--ink); }
+.cta-dark:hover  { background: #262626; }
+.cta-light:hover { background: #e4e4e4; }
+.cta .arr { font-size: 13px; opacity: 0.8; }
+
+/* ── Hero image / visual ── */
+.hero-visual { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+.hero-visual svg { display: block; width: 100%; height: auto; }
+
+/* ── Audio row ── */
+.audio-row {
+  max-width: 1120px; margin: 24px auto 0;
+  padding: 24px 32px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--rule);
+}
+.audio-left { display: flex; align-items: center; gap: 16px; font-size: 15px; color: var(--ink); }
+.audio-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--pill-gray); border: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 12px; color: var(--ink);
+}
+.audio-sep { color: var(--ink-faint); margin: 0 4px; }
+.audio-time { color: var(--ink-muted); }
+.audio-share { font-size: 15px; color: var(--ink); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+
+/* ── Article body: two-column layout ── */
+.article-wrap { max-width: 1120px; margin: 0 auto; padding: 56px 32px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 72px; }
+.toc-aside { position: sticky; top: 90px; align-self: start; font-size: 14px; max-height: calc(100vh - 110px); overflow-y: auto; padding-right: 8px; }
+.toc-aside h4 { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 14px; }
+.toc-aside ul { list-style: none; margin: 0; }
+.toc-aside li { margin: 0; padding: 6px 0; line-height: 1.4; }
+.toc-aside li.group { padding-top: 14px; font-weight: 500; color: var(--ink); }
+.toc-aside li.sub   { padding-left: 14px; }
+.toc-aside a { color: var(--ink-muted); text-decoration: none; display: block; }
+.toc-aside a:hover { color: var(--ink); }
+
+/* ── Prose column ── */
+.prose { max-width: 720px; font-size: 17px; line-height: 1.7; color: var(--ink-body); }
+.prose h1.sec {
+  font-size: 32px; font-weight: 500; line-height: 1.2; letter-spacing: -0.02em;
+  color: var(--ink); margin: 72px 0 24px;
+}
+.prose h1.sec:first-child { margin-top: 0; }
+.prose h2.sub {
+  font-size: 22px; font-weight: 500; line-height: 1.3;
+  color: var(--ink); margin: 48px 0 16px;
+}
+.prose h3.subsub {
+  font-size: 18px; font-weight: 500;
+  color: var(--ink); margin: 32px 0 12px;
+}
+.prose p { margin-bottom: 20px; }
+.prose ul, .prose ol { margin: 14px 0 24px 24px; }
+.prose li { margin-bottom: 12px; }
+.prose strong { font-weight: 600; color: var(--ink); }
+.prose em { font-style: italic; }
+.prose a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--ink-faint); text-underline-offset: 3px; }
+.prose a:hover { text-decoration-color: var(--ink); }
+
+/* Citation links [N] — compact, subtle, hover-highlight */
+.prose a.cite {
+  text-decoration: none;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  padding: 0 2px;
+  border-radius: 3px;
+  transition: background 0.12s;
+}
+.prose a.cite:hover { background: #e8f3fe; color: var(--accent); }
+/* Target highlight when a reference is jumped to */
+.prose p[id^="ref-"] {
+  scroll-margin-top: 90px;
+  transition: background 0.6s;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 0 -10px 4px -10px;
+}
+.prose p[id^="ref-"]:target { background: #fff3c4; }
+
+/* Code */
+.prose code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: #f4f4f4;
+  color: var(--ink);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.prose td code, .prose th code { background: transparent; padding: 0; }
+.prose pre {
+  background: #0d0d0d;
+  color: #e8e8e8;
+  padding: 20px 24px;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 24px 0 32px;
+  overflow-x: auto;
+  border-radius: 10px;
 }
 
-/* ── Running header ── */
-.rh {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 10px;
-  margin-bottom: 40px;
-  font-size: 9.5pt;
-  color: #555;
+/* Tables */
+.prose table {
+  border-collapse: collapse; width: 100%;
+  font-size: 14px; margin: 24px 0 32px;
+}
+.prose th {
+  padding: 12px 10px; text-align: left; font-weight: 500;
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--ink-muted); border-bottom: 1px solid var(--ink); background: transparent;
+}
+.prose td { padding: 14px 10px; font-size: 14px; color: var(--ink-body); border-bottom: 1px solid var(--rule); }
+.prose td.r, .prose th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.prose td.c, .prose th.c { text-align: center; }
+.prose tr.total td { border-top: 1px solid var(--ink); border-bottom: none; font-weight: 600; color: var(--ink); }
+.prose tr.shaded td { background: #fafafa; }
+
+/* Callouts */
+.prose .callout {
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin: 32px 0;
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+.prose .callout strong { color: var(--ink); }
+
+/* Charts */
+.prose .chart-wrap {
+  margin: 32px 0 20px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 20px 24px;
+  border: 1px solid var(--rule);
+}
+.prose .fig-caption { font-size: 13px; color: var(--ink-muted); margin-top: 8px; margin-bottom: 28px; line-height: 1.5; }
+.prose .fig-caption strong { color: var(--ink); }
+
+/* Diagrams */
+.prose .diagram-wrap { margin: 28px 0; text-align: center; padding: 24px; background: #fafafa; border-radius: 12px; overflow-x: auto; }
+.prose .diagram-wrap svg { max-width: 100%; height: auto; }
+.prose .diagram-caption { font-size: 13px; color: var(--ink-muted); margin-top: 10px; margin-bottom: 24px; line-height: 1.5; }
+
+/* References */
+.prose h1.sec[data-refs] + p, .prose p + p { }
+hr { border: none; }
+
+/* Hide page/footer/rh wrappers from original */
+.prose .page, .prose .rh, .prose .footer { display: none; }
+
+/* Footer */
+footer {
+  padding: 56px 32px; border-top: 1px solid var(--rule);
+  font-size: 13px; color: var(--ink-muted); text-align: center;
 }
 
-/* ── TOC ── */
-.toc-title { font-size: 28pt; font-weight: 300; margin-bottom: 40px; letter-spacing: -0.02em; }
-.toc-section { display: flex; justify-content: space-between; align-items: baseline; font-size: 10.5pt; margin-bottom: 10px; border-bottom: 1px dotted #bbb; padding-bottom: 2px; }
-.toc-section a { text-decoration: none; color: #000; font-weight: 500; }
-.toc-sub { display: flex; justify-content: space-between; font-size: 10pt; margin: 4px 0 4px 20px; color: #222; }
-.toc-sub a { text-decoration: none; color: #333; }
-.toc-pn { font-variant-numeric: tabular-nums; color: #555; min-width: 24px; text-align: right; }
-
-/* ── Section headings ── */
-h1.sec { font-size: 28pt; font-weight: 300; letter-spacing: -0.02em; margin: 48px 0 20px; line-height: 1.15; }
-h2.sub { font-size: 14pt; font-weight: 600; margin: 32px 0 12px; line-height: 1.25; }
-h3.subsub { font-size: 11.5pt; font-weight: 600; margin: 22px 0 8px; }
-
-p { margin-bottom: 12px; }
-ul, ol { margin: 10px 0 14px 22px; }
-li { margin-bottom: 6px; }
-
-/* ── Tables ── */
-table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 16px 0 20px; }
-th { border-bottom: 1px solid #ccc; border-top: 1px solid #ccc; padding: 6px 10px; text-align: left; font-weight: 600; font-size: 9.5pt; background: #f0f5fa; color: #333; }
-td { border-bottom: 1px solid #ddd; padding: 6px 10px; font-size: 10pt; }
-td.r { text-align: right; }
-td.c { text-align: center; }
-th.r { text-align: right; }
-th.c { text-align: center; }
-tr.total td { border-top: 1px solid #000; font-weight: 600; }
-tr.shaded td { background: #f5f5f5; }
-
-/* ── Code ── */
-code { font-family: 'Courier New', monospace; font-size: 9.5pt; background: #f5f5f5; padding: 1px 5px; border-radius: 2px; }
-td code, th code { background: transparent; padding: 0; }
-pre { background: #f5f5f5; border-left: 3px solid #000; padding: 16px 20px; font-family: 'Courier New', monospace; font-size: 9.5pt; line-height: 1.6; margin: 16px 0 20px; overflow-x: auto; }
-
-/* ── Charts ── */
-.chart-wrap { margin: 20px 0 8px; min-height: 360px; }
-.fig-caption { font-size: 9pt; color: #444; margin-top: 6px; margin-bottom: 24px; }
-.fig-caption strong { font-weight: 600; }
-.diagram-wrap { margin: 24px 0; text-align: center; border: none; border-radius: 4px; padding: 16px; background: transparent; }
-.diagram-wrap img { max-width: 220px; width: 100%; height: auto; filter: invert(1) hue-rotate(180deg); }
-.diagram-wrap.wide { margin-left: -80px; margin-right: -80px; }
-.diagram-wrap.wide img { max-width: 100%; }
-.diagram-caption { font-size: 9pt; color: #444; margin-top: 8px; margin-bottom: 20px; }
-
-/* ── Dividers ── */
-hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
-
-/* ── Key finding callout ── */
-.callout { border-left: 3px solid #000; padding: 14px 18px; margin: 24px 0; background: #fafafa; font-size: 10.5pt; }
-.callout strong { font-weight: 700; }
-
-/* ── Footer ── */
-.footer { margin-top: 60px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 9pt; color: #666; display: flex; justify-content: space-between; }
-
-/* ── Print / screen ── */
-@page { size: A4; margin: 0.55in 0.5in; }
-@media print {
-  body { background: #fff; }
-  .rh, .footer { display: none !important; }
-  .page { padding: 0 !important; box-shadow: none !important; margin: 0 !important; }
-  .cover { padding: 0 !important; box-shadow: none !important; min-height: 92vh; page-break-after: always; }
-  .cover-band { margin-top: 30vh; }
-  .cover-meta { margin-top: 20vh; }
-  h1.sec { page-break-before: always; margin-top: 0; }
-  #s1 h1.sec { page-break-before: avoid; }
-  h1.sec + p, h2.sub + p { page-break-before: avoid; }
-  h2.sub { page-break-after: avoid; }
-  table, .chart-wrap, .callout, pre { page-break-inside: avoid; }
-  p { orphans: 3; widows: 3; }
+/* Responsive */
+@media (max-width: 960px) {
+  .article-wrap { grid-template-columns: 1fr; gap: 32px; }
+  .toc-aside { position: static; max-height: none; border-left: 2px solid var(--rule); padding-left: 16px; }
+  .hero-title { font-size: 44px; }
+}
+@media (max-width: 640px) {
+  .nav { padding: 14px 20px; }
+  .nav-links { display: none; }
+  .hero-title { font-size: 34px; }
+  .hero { padding: 32px 20px 16px; }
+  .article-wrap { padding: 32px 20px 56px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ══════════════ COVER ══════════════ -->
-<div class="cover">
-  <div class="cover-org">BurnettBench Research</div>
-  <div class="cover-band">
-    <div class="cover-title">Scope Coverage Effects<br>in llms.txt V2</div>
-    <div class="cover-type">Technical Report</div>
-    <div class="cover-meta">
-      <span class="author-name">Happy Herman <span class="lname">Niyorurema</span></span>
-      &nbsp;&nbsp;&nbsp;
-      <span class="author-name">Maricar Hastings Estella</span>
-      <span class="author-role"> (Research Supervisor)</span><br>
-      Department of Communications and Strategy, Anne Burnett Marion School of Medicine<br>
-      <code style="font-size:9.5pt;background:none;border:none;padding:0;">{h.niyorurema, m.estella} @tcu.edu</code><br>
-      October 2026
+<!-- ─── NAV ─── -->
+<nav class="nav">
+  <div class="nav-left">
+    <a href="#top" class="nav-logo">BurnettBench</a>
+    <div class="nav-links">
+      <a href="https://github.com/happy-tcu/burnettbench" target="_blank" rel="noopener">Studies ↗</a>
+      <a href="https://github.com/happy-tcu/burnettbench-grader" target="_blank" rel="noopener">Replication ↗</a>
+      <a href="#s3">Methods</a>
     </div>
   </div>
+  <div class="nav-right">
+    <button class="nav-search-btn" id="navSearchBtn" aria-label="Search the article" title="Search this article (⌘F)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+    </button>
+    <a href="https://github.com/happy-tcu/burnettbench" target="_blank" rel="noopener" class="nav-btn nav-btn-light">Replication ↗</a>
+    <a href="https://github.com/happy-tcu/burnettbench/raw/main/burnettbench_technical_report.pdf" class="nav-btn nav-btn-dark">Download PDF ↓</a>
+  </div>
+</nav>
+<div id="searchBar" class="search-bar" hidden>
+  <input type="search" id="searchInput" placeholder="Search this article…" autocomplete="off">
+  <span id="searchMeta" class="search-meta"></span>
+  <button id="searchClose" aria-label="Close search">×</button>
 </div>
 
-<!-- ══════════════ TABLE OF CONTENTS ══════════════ -->
-<div class="page">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-date">October 2026</div>
+  <h1 class="hero-title">Scope coverage effects in llms.txt V2</h1>
+  <div class="hero-ctas">
+    <a href="#s1" class="cta cta-dark">Read the technical report</a>
+    <a href="https://burnettbench-grader.vercel.app" class="cta cta-light">Human validation app <span class="arr">↗</span></a>
+    <a href="https://github.com/happy-tcu/burnettbench" class="cta cta-light">Replication repo <span class="arr">↗</span></a>
   </div>
+</section>
 
-  <div class="toc-title">Table of Contents</div>
-
-  <div class="toc-section"><a href="#s1">I. Executive Summary</a><span class="toc-pn">2</span></div>
-  <div class="toc-section"><a href="#s2">II. Background and Motivation</a><span class="toc-pn">3</span></div>
-  <div class="toc-sub"><a href="#s2a">A. The llms.txt standard</a><span class="toc-pn">3</span></div>
-  <div class="toc-sub"><a href="#s2b">B. The blind injection problem</a><span class="toc-pn">3</span></div>
-  <div class="toc-sub"><a href="#s2c">C. Related work</a><span class="toc-pn">3</span></div>
-  <div class="toc-section"><a href="#s3">III. Study Design</a><span class="toc-pn">4</span></div>
-  <div class="toc-sub"><a href="#s3a">A. Institutions and models</a><span class="toc-pn">4</span></div>
-  <div class="toc-sub"><a href="#s3b">B. Fact probe methodology</a><span class="toc-pn">4</span></div>
-  <div class="toc-sub"><a href="#s3c">C. Experimental conditions</a><span class="toc-pn">5</span></div>
-  <div class="toc-section"><a href="#s4">IV. Finding 1 — V2 Dramatically Improves Factual Accuracy on Covered Facts</a><span class="toc-pn">5</span></div>
-  <div class="toc-section"><a href="#s5">V. Finding 2 — Incomplete Coverage Degrades Out-of-Scope Accuracy</a><span class="toc-pn">7</span></div>
-  <div class="toc-section"><a href="#s6">VI. Finding 3 — Prompt-Level Fixes Fail</a><span class="toc-pn">8</span></div>
-  <div class="toc-section"><a href="#s7">VII. Finding 4 — Query-Time Gating Recovers Accuracy Without Hurting Recall</a><span class="toc-pn">9</span></div>
-  <div class="toc-sub"><a href="#s7a">A. OPT2: scope-aware injection</a><span class="toc-pn">9</span></div>
-  <div class="toc-sub"><a href="#s7b">B. OPT3: section-level retrieval</a><span class="toc-pn">10</span></div>
-  <div class="toc-sub"><a href="#s7c">C. Significance testing</a><span class="toc-pn">10</span></div>
-  <div class="toc-section"><a href="#s8">VIII. Threshold Tuning and Classifier Experiments</a><span class="toc-pn">11</span></div>
-  <div class="toc-sub"><a href="#s8a">A. Threshold sweep (T20–T45)</a><span class="toc-pn">11</span></div>
-  <div class="toc-sub"><a href="#s8b">B. Top-k sweep (K3–K5)</a><span class="toc-pn">12</span></div>
-  <div class="toc-sub"><a href="#s8c">C. Real-world replication on published llms.txt</a><span class="toc-pn">12</span></div>
-  <div class="toc-sub"><a href="#s8d">D. Scope classifier experiments (OPT4–OPT4_263)</a><span class="toc-pn">13</span></div>
-  <div class="toc-section"><a href="#s9fm">IX. Failure Mode Analysis — Why Do Uncovered Facts Fail?</a><span class="toc-pn">14</span></div>
-  <div class="toc-sub"><a href="#s9a">A. The injection paradox: confident wrong answers increase</a><span class="toc-pn">14</span></div>
-  <div class="toc-sub"><a href="#s9b">B. Which fact categories are systematically uncovered?</a><span class="toc-pn">15</span></div>
-  <div class="toc-sub"><a href="#s9c">C. Which categories trigger the most confident wrong answers?</a><span class="toc-pn">15</span></div>
-  <div class="toc-sub"><a href="#s9d">D. Does a longer guide mean better coverage?</a><span class="toc-pn">16</span></div>
-  <div class="toc-section"><a href="#s9v">X. Human Validation of the Automated Judge</a><span class="toc-pn">17</span></div>
-  <div class="toc-sub"><a href="#s9va">A. Motivation</a><span class="toc-pn">17</span></div>
-  <div class="toc-sub"><a href="#s9vb">B. Sub-study design</a><span class="toc-pn">17</span></div>
-  <div class="toc-sub"><a href="#s9vc">C. Agreement statistics</a><span class="toc-pn">18</span></div>
-  <div class="toc-sub"><a href="#s9vd">D. Finding 5 — The judge exhibits in-family bias</a><span class="toc-pn">19</span></div>
-  <div class="toc-sub"><a href="#s9ve">E. Per-condition and per-institution agreement</a><span class="toc-pn">20</span></div>
-  <div class="toc-sub"><a href="#s9vf">F. Sub-study limitations</a><span class="toc-pn">20</span></div>
-  <div class="toc-section"><a href="#s9">XI. Spec Recommendation — covers: and excludes: Fields</a><span class="toc-pn">21</span></div>
-  <div class="toc-section"><a href="#s10">XII. Practical Guidance</a><span class="toc-pn">22</span></div>
-  <div class="toc-section"><a href="#s11">XIII. Limitations and Future Work</a><span class="toc-pn">23</span></div>
-  <div class="toc-sub"><a href="#s11a">A. Study limitations</a><span class="toc-pn">23</span></div>
-  <div class="toc-sub"><a href="#s11b">B. Threat model and adversarial future work</a><span class="toc-pn">24</span></div>
-  <div class="toc-section"><a href="#s12">XIV. What Can and Cannot Be Concluded</a><span class="toc-pn">25</span></div>
-  <div class="toc-section"><a href="#decl">Declarations</a><span class="toc-pn">26</span></div>
-  <div class="toc-section"><a href="#refs">References</a><span class="toc-pn">27</span></div>
-
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>1</span>
-  </div>
+<!-- ─── HERO VISUAL (animated particle swarm) ─── -->
+<div class="hero-visual">
+  <canvas id="heroCanvas" aria-hidden="true" style="display:block;width:100%;height:440px;"></canvas>
 </div>
+<script>
+(function(){
+  var canvas = document.getElementById('heroCanvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, dpr = window.devicePixelRatio || 1;
+  var particles = [];
+  var N = 1400;
 
-<!-- ══════════════ I. EXECUTIVE SUMMARY ══════════════ -->
-<div class="page" id="s1">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
+  function resize(){
+    var rect = canvas.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  resize();
+  window.addEventListener('resize', function(){ resize(); spawn(); });
+
+  function arcY(x){
+    var t = x;
+    return 0.78 - 0.55 * Math.pow(Math.sin(Math.PI * t), 1.2);
+  }
+
+  function spawn(){
+    particles.length = 0;
+    for (var i=0; i<N; i++){
+      var tx = Math.random();
+      var cx = tx * W;
+      var jitter = (Math.random() - 0.5) * 180;
+      var cy = arcY(tx) * H + jitter;
+      particles.push({
+        x: cx, y: cy, baseY: cy,
+        r: 0.3 + Math.pow(Math.random(), 2.5) * 2.0,
+        a: 0.15 + Math.random() * 0.75,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.08,
+        bobAmp: 2 + Math.random() * 6,
+        bobFreq: 0.0008 + Math.random() * 0.0018,
+        bobPhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  spawn();
+
+  var start = performance.now();
+  var arcDraw = 0;
+
+  function frame(now){
+    var t = now - start;
+    ctx.clearRect(0, 0, W, H);
+
+    for (var i=0; i<particles.length; i++){
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      var bob = Math.sin(t * p.bobFreq + p.bobPhase) * p.bobAmp;
+      p.y += (p.baseY + bob - p.y) * 0.02;
+      if (p.x < -4) p.x = W + 4;
+      else if (p.x > W + 4) p.x = -4;
+
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = '#0d0d0d';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    arcDraw = Math.min(1, t / 2500);
+    ctx.strokeStyle = '#ffd1cf';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    var steps = 160;
+    for (var s=0; s<=steps*arcDraw; s++){
+      var tx = s / steps;
+      var x = tx * W;
+      var y = (arcY(tx) + 0.02) * H + Math.sin(t*0.0008 + tx*4) * 3;
+      if (s === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<!-- ─── AUDIO ROW ─── -->
+<div class="audio-row">
+  <div class="audio-left">
+    <button class="audio-btn" aria-label="Play">▶</button>
+    <span>Listen to article</span>
+    <span class="audio-sep">|</span>
+    <span class="audio-time">24:12</span>
   </div>
+  <button class="audio-share" id="shareBtn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+    <span id="shareLabel">Share</span>
+  </button>
+</div>
+<script>
+(function(){
+  var btn = document.getElementById('shareBtn');
+  var label = document.getElementById('shareLabel');
+  if(!btn || !label) return;
+  btn.addEventListener('click', function(){
+    var url = window.location.href;
+    var done = function(){
+      var original = label.textContent;
+      label.textContent = 'Link copied';
+      setTimeout(function(){ label.textContent = original; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, function(){ fallback(url); });
+    } else {
+      fallback(url);
+    }
+    function fallback(u){
+      var ta = document.createElement('textarea');
+      ta.value = u; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch(e) {}
+      document.body.removeChild(ta);
+    }
+  });
+})();
 
-  <h1 class="sec">I. Executive Summary</h1>
+// ── Inline article search ──
+(function(){
+  var btn    = document.getElementById('navSearchBtn');
+  var bar    = document.getElementById('searchBar');
+  var input  = document.getElementById('searchInput');
+  var meta   = document.getElementById('searchMeta');
+  var closeB = document.getElementById('searchClose');
+  if(!btn || !bar || !input) return;
+
+  var hits = [];       // array of <mark> elements currently in DOM
+  var current = -1;
+
+  function clearHits(){
+    hits.forEach(function(m){
+      var parent = m.parentNode;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    });
+    hits = []; current = -1;
+    meta.textContent = '';
+  }
+
+  function openBar(){
+    bar.hidden = false;
+    setTimeout(function(){ input.focus(); input.select(); }, 20);
+  }
+  function closeBar(){
+    clearHits();
+    input.value = '';
+    bar.hidden = true;
+  }
+
+  btn.addEventListener('click', openBar);
+  closeB.addEventListener('click', closeBar);
+
+  // ⌘F / Ctrl+F opens the inline search instead of browser find (if focus inside article)
+  document.addEventListener('keydown', function(e){
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !e.shiftKey) {
+      e.preventDefault(); openBar();
+    }
+    if (e.key === 'Escape' && !bar.hidden) { closeBar(); }
+    if (e.key === 'Enter' && document.activeElement === input) {
+      e.preventDefault();
+      if (hits.length === 0) return;
+      current = (current + (e.shiftKey ? -1 : 1) + hits.length) % hits.length;
+      highlightCurrent();
+    }
+  });
+
+  // Walk text nodes inside the <article class="prose"> and wrap matches
+  function doSearch(q){
+    clearHits();
+    if (!q || q.length < 2) return;
+    var root = document.querySelector('article.prose');
+    if (!root) return;
+    var re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(n){
+        if (!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        var p = n.parentNode;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        var tag = p.nodeName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var textNodes = [];
+    var n;
+    while ((n = walker.nextNode())) textNodes.push(n);
+
+    textNodes.forEach(function(node){
+      var text = node.nodeValue;
+      if (!re.test(text)) return;
+      re.lastIndex = 0;
+      var frag = document.createDocumentFragment();
+      var lastIdx = 0, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, m.index)));
+        var mark = document.createElement('mark');
+        mark.className = 'search-hit';
+        mark.textContent = m[0];
+        frag.appendChild(mark);
+        hits.push(mark);
+        lastIdx = m.index + m[0].length;
+      }
+      if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+      node.parentNode.replaceChild(frag, node);
+    });
+
+    if (hits.length > 0) {
+      current = 0;
+      highlightCurrent();
+    }
+    meta.textContent = hits.length ? (1 + ' / ' + hits.length) : 'no matches';
+  }
+
+  function highlightCurrent(){
+    hits.forEach(function(m, i){ m.classList.toggle('current', i === current); });
+    if (hits[current]) hits[current].scrollIntoView({behavior:'smooth', block:'center'});
+    meta.textContent = (current+1) + ' / ' + hits.length;
+  }
+
+  var debounce;
+  input.addEventListener('input', function(){
+    clearTimeout(debounce);
+    debounce = setTimeout(function(){ doSearch(input.value); }, 180);
+  });
+})();
+</script>
+
+<!-- ─── ARTICLE BODY: TOC + PROSE ─── -->
+<div class="article-wrap">
+  <aside class="toc-aside">
+    <h4>Contents</h4>
+    <ul>
+      <li><a href="#s1">Executive summary</a></li>
+      <li class="group"><a href="#s2">Background and motivation</a></li>
+      <li class="sub"><a href="#s2a">The llms.txt standard</a></li>
+      <li class="sub"><a href="#s2b">The blind injection problem</a></li>
+      <li class="sub"><a href="#s2c">Related work</a></li>
+      <li class="group"><a href="#s3">Study design</a></li>
+      <li class="sub"><a href="#s3a">Institutions and models</a></li>
+      <li class="sub"><a href="#s3b">Fact-probe methodology</a></li>
+      <li class="sub"><a href="#s3c">Experimental conditions</a></li>
+      <li><a href="#s4">Finding 1 — IN_V2 lift</a></li>
+      <li><a href="#s5">Finding 2 — OUT_V2 harm</a></li>
+      <li><a href="#s6">Finding 3 — Prompt fixes fail</a></li>
+      <li><a href="#s7">Finding 4 — Query-time gating</a></li>
+      <li><a href="#s8">Threshold &amp; classifier sweeps</a></li>
+      <li><a href="#s9fm">Failure-mode analysis</a></li>
+      <li class="group"><a href="#s9v">Human validation</a></li>
+      <li class="sub"><a href="#s9va">Motivation</a></li>
+      <li class="sub"><a href="#s9vb">Sub-study design</a></li>
+      <li class="sub"><a href="#s9vc">Agreement statistics</a></li>
+      <li class="sub"><a href="#s9vd">Finding 5 — In-family bias</a></li>
+      <li class="sub"><a href="#s9ve">Per-condition agreement</a></li>
+      <li class="sub"><a href="#s9vf">Sub-study limitations</a></li>
+      <li><a href="#s9">Spec recommendation</a></li>
+      <li><a href="#s10">Practical guidance</a></li>
+      <li class="group"><a href="#s11">Limitations &amp; future work</a></li>
+      <li class="sub"><a href="#s11a">Study limitations</a></li>
+      <li class="sub"><a href="#s11b">Threat model</a></li>
+      <li><a href="#s12">What can and cannot be concluded</a></li>
+      <li><a href="#decl">Declarations</a></li>
+      <li><a href="#refs">References</a></li>
+    </ul>
+  </aside>
+
+  <article class="prose">
+<h1 class="sec">I. Executive Summary</h1>
 
   <p>This report presents the second in a series of empirical studies evaluating the llms.txt standard — a structured guide file that institutions publish so AI systems can read and use their information. Our research question: does giving an AI assistant this guide improve how accurately it answers questions about the institution — and does it do so uniformly, or only for questions the guide actually covers?</p>
 
@@ -224,11 +631,11 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>A real-world replication using Bakame AI's published llms.txt (bakame.online/llms.txt) confirms both effects on a live, institution-authored file: +45.7pp accuracy lift on covered facts and −12.5pp accuracy drop on uncovered facts — with the harm stronger than on our controlled research documents.</p>
 
-  <h3 class="subsub" style="margin-top:28px;">Keywords</h3>
-  <p style="font-size:10pt;color:#333;line-height:1.7;">llms.txt · generative engine optimization (GEO) · scope coverage · context injection · retrieval-augmented generation · LLM-as-judge · in-family bias · injection paradox · inter-rater reliability · Cohen's κ · Krippendorff's α</p>
+  <h3 class="subsub" style="margin-top:36px;">Keywords</h3>
+  <p style="font-size:14px;color:#595959;line-height:1.6;">llms.txt · generative engine optimization (GEO) · scope coverage · context injection · retrieval-augmented generation · LLM-as-judge · in-family bias · injection paradox · inter-rater reliability · Cohen's κ · Krippendorff's α</p>
 
-  <h3 class="subsub" style="margin-top:20px;">Key terms</h3>
-  <ul style="font-size:10pt;line-height:1.7;margin:8px 0 0 22px;">
+  <h3 class="subsub" style="margin-top:28px;">Key terms</h3>
+  <ul style="font-size:14px;color:#262626;line-height:1.7;margin:10px 0 0 22px;">
     <li><strong>llms.txt V2</strong> — a structured, machine-readable guide file an institution publishes at <code>/llms.txt</code> so AI systems can read verified information about it. The V2 format adds section headers, scope annotations, and richer formatting over V1.</li>
     <li><strong>IN_V2 / OUT_V2</strong> — a fact that is (IN) or is not (OUT) explicitly covered by the institution's V2 guide.</li>
     <li><strong>Injection paradox</strong> — the empirical finding that attaching a guide which does not cover a question can make the model <em>more</em> confidently wrong, not just less accurate — because the presence of the guide suppresses honest hedging.</li>
@@ -245,50 +652,28 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     <li><strong>Percentage points (pp)</strong> — the arithmetic difference between two percentages. +60.6pp means an increase from, e.g., 27.6% to 88.2%, not a 60% relative increase.</li>
   </ul>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>2</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ II. BACKGROUND ══════════════ -->
-<div class="page" id="s2">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">II. Background and Motivation</h1>
+<h1 class="sec">II. Background and Motivation</h1>
 
   <h2 class="sub" id="s2a">A. The llms.txt Standard</h2>
-  <p>The llms.txt standard [8], proposed by Howard and Answer.AI, defines a machine-readable file — a structured text guide — served at <code>/llms.txt</code> that institutions publish so AI systems can read verified information about them. A V2 document extends the original V1 format with section headers, annotations (short labels that describe what each section is for), and richer formatting designed to improve how well AI models understand the content.</p>
+  <p>The llms.txt standard <a class="cite" href="#ref-8">[8]</a>, proposed by Howard and Answer.AI, defines a machine-readable file — a structured text guide — served at <code>/llms.txt</code> that institutions publish so AI systems can read verified information about them. A V2 document extends the original V1 format with section headers, annotations (short labels that describe what each section is for), and richer formatting designed to improve how well AI models understand the content.</p>
   <p>The specification says nothing about how AI systems should decide when to use the file at inference time (the moment an AI answers a question). The assumed behavior — and what current implementations do — is full-document injection: the entire guide is given to the AI as background context for every question, regardless of what that question is about.</p>
 
   <h2 class="sub" id="s2b">B. The Blind Injection Problem</h2>
-  <p>Giving the AI the full guide for every question is the opposite of how well-designed AI retrieval systems work. In Retrieval-Augmented Generation (RAG) [11] — the mainstream approach for giving AI models access to external knowledge — context is never given blindly. Every incoming question is first scored for relevance against a knowledge base; only the relevant sections are retrieved and shown to the AI. RAG is the standard in every production AI system that uses external documents.</p>
-  <p>llms.txt, as currently specified, skips this relevance check. The full guide is given to the AI regardless of whether the user's question falls within what the guide covers. Our Study 1 [1] confirmed that this blind approach improves accuracy on covered facts. Study 2 asks what happens on facts the guide does not cover.</p>
+  <p>Giving the AI the full guide for every question is the opposite of how well-designed AI retrieval systems work. In Retrieval-Augmented Generation (RAG) <a class="cite" href="#ref-11">[11]</a> — the mainstream approach for giving AI models access to external knowledge — context is never given blindly. Every incoming question is first scored for relevance against a knowledge base; only the relevant sections are retrieved and shown to the AI. RAG is the standard in every production AI system that uses external documents.</p>
+  <p>llms.txt, as currently specified, skips this relevance check. The full guide is given to the AI regardless of whether the user's question falls within what the guide covers. Our Study 1 <a class="cite" href="#ref-1">[1]</a> confirmed that this blind approach improves accuracy on covered facts. Study 2 asks what happens on facts the guide does not cover.</p>
 
   <h2 class="sub" id="s2c">C. Related Work</h2>
-  <p>Prior work establishes that irrelevant context in a model's input degrades factual accuracy. Shi et al. [3] show that LLMs are easily distracted by irrelevant information in the prompt. Cuconasu et al. [4] demonstrate that injecting noisy retrieved documents actively harms RAG performance. Sun, Bai, and Dredze [5] show that once a model has seen contextual information — even incorrect or out-of-scope information — it cannot fully disregard it ("what is seen cannot be unseen"). Singh et al. [7] show that chunk-level relevance filtering before injection outperforms document-level RAG, providing the theoretical basis for our gating approach.</p>
+  <p>Prior work establishes that irrelevant context in a model's input degrades factual accuracy. Shi et al. <a class="cite" href="#ref-3">[3]</a> show that LLMs are easily distracted by irrelevant information in the prompt. Cuconasu et al. <a class="cite" href="#ref-4">[4]</a> demonstrate that injecting noisy retrieved documents actively harms RAG performance. Sun, Bai, and Dredze <a class="cite" href="#ref-5">[5]</a> show that once a model has seen contextual information — even incorrect or out-of-scope information — it cannot fully disregard it ("what is seen cannot be unseen"). Singh et al. <a class="cite" href="#ref-7">[7]</a> show that chunk-level relevance filtering before injection outperforms document-level RAG, providing the theoretical basis for our gating approach.</p>
 
-  <p>A separate line of work addresses the reliability of LLM-as-judge evaluation, on which this study depends. Zheng et al. [13] documented systematic position and verbosity biases in pairwise LLM judging and reported that strong LLM judges reach approximately 80% agreement with human raters on chat-quality tasks. Panickssery, Bowman, and Feng [14] show that LLM evaluators can distinguish their own generations from those of other models and exhibit a causal self-preference bias — scoring their own outputs more favorably. Section X of this paper quantifies this effect for GPT-4o-mini as the judge of five-model output and reports a per-family κ gap of approximately 0.25.</p>
+  <p>A separate line of work addresses the reliability of LLM-as-judge evaluation, on which this study depends. Zheng et al. <a class="cite" href="#ref-13">[13]</a> documented systematic position and verbosity biases in pairwise LLM judging and reported that strong LLM judges reach approximately 80% agreement with human raters on chat-quality tasks. Panickssery, Bowman, and Feng <a class="cite" href="#ref-14">[14]</a> show that LLM evaluators can distinguish their own generations from those of other models and exhibit a causal self-preference bias — scoring their own outputs more favorably. Section X of this paper quantifies this effect for GPT-4o-mini as the judge of five-model output and reports a per-family κ gap of approximately 0.25.</p>
 
-  <p>Generative Engine Optimization (GEO) [2] studies how publishers can optimize content for AI retrieval — but does not address what happens when that content is selectively injected across queries of varying scope. This study addresses that gap.</p>
+  <p>Generative Engine Optimization (GEO) <a class="cite" href="#ref-2">[2]</a> studies how publishers can optimize content for AI retrieval — but does not address what happens when that content is selectively injected across queries of varying scope. This study addresses that gap.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>3</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ III. STUDY DESIGN ══════════════ -->
-<div class="page" id="s3">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">III. Study Design</h1>
+<h1 class="sec">III. Study Design</h1>
 
   <h2 class="sub" id="s3a">A. Institutions and Models</h2>
   <p>We selected five institutions spanning diverse domains to test whether scope-coverage effects generalize across institutional types:</p>
@@ -330,20 +715,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     <tr><td><code>K5</code></td><td>OPT3 with k=5 sections retrieved — upper bound on recall before approaching full-V2 injection.</td></tr>
   </table>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>4</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ IV. FINDING 1 ══════════════ -->
-<div class="page" id="s4">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">IV. Finding 1 — V2 Appears to Improve Factual Accuracy on Covered Facts</h1>
+<h1 class="sec">IV. Finding 1 — V2 Appears to Improve Factual Accuracy on Covered Facts</h1>
 
   <p>Across all five institutions and five models, giving the AI the V2 guide improved how often it got the right answer on facts the guide covers — by an average of +60.6 percentage points (pooled, meaning averaged across all five institutions; p&lt;.001, Cohen's h=+1.452, a large effect by standard statistical measures). This is consistent with Study 1's finding, replicated here with a stricter accuracy metric and a more diverse institution sample.</p>
 
@@ -368,20 +742,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     The +60.6pp in-scope improvement is large and consistent across institutions and models in our dataset. The open question is what happens when the guide does not cover the fact being asked about.
   </div>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>5</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ V. FINDING 2 ══════════════ -->
-<div class="page" id="s5">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">V. Finding 2 — Incomplete Coverage May Degrade Out-of-Scope Accuracy</h1>
+<h1 class="sec">V. Finding 2 — Incomplete Coverage May Degrade Out-of-Scope Accuracy</h1>
 
   <p>On facts not covered by the V2 guide, giving the AI the guide appeared to reduce accuracy compared to giving it nothing — in 4 of 5 institutions. Averaged across all institutions, the accuracy drop was −6.4 percentage points (p=0.001, h=−0.154 — modest in size but statistically significant, meaning it is unlikely to be due to chance alone, and it pointed in the same direction in nearly all institutions tested).</p>
 
@@ -400,7 +763,7 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     <tr class="total"><td>Pooled</td><td class="r">29.5%</td><td class="r">23.1%</td><td class="r">−6.4</td><td>Harm ✗ (p=0.001**)</td></tr>
   </table>
 
-  <p>The mechanism is contextual interference — when the AI receives a guide that discusses topics related to, but not exactly matching, a question, it uses that nearby information anyway, often producing a wrong answer instead of saying it doesn't know. Research on knowledge conflict [5] and context distraction [3] shows that AI models cannot selectively ignore context they have already read — it influences their answers even when it is not directly relevant.</p>
+  <p>The mechanism is contextual interference — when the AI receives a guide that discusses topics related to, but not exactly matching, a question, it uses that nearby information anyway, often producing a wrong answer instead of saying it doesn't know. Research on knowledge conflict <a class="cite" href="#ref-5">[5]</a> and context distraction <a class="cite" href="#ref-3">[3]</a> shows that AI models cannot selectively ignore context they have already read — it influences their answers even when it is not directly relevant.</p>
 
   <p>Mayo Clinic is the one exception (+1.5pp improvement). The Mayo V2 guide uses sufficiently specialized medical language that questions about uncovered topics receive little contamination from the guide's content. This suggests the size of the harm depends on how closely related the uncovered facts are to what the guide does cover.</p>
 
@@ -408,20 +771,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     An institution that publishes a llms.txt covering some of its operations should expect that document to actively harm AI accuracy on the topics it does not cover. Publishing an incomplete document is not neutral — it is harmful.
   </div>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>6</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ VI. FINDING 3 ══════════════ -->
-<div class="page" id="s6">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">VI. Finding 3 — Prompt-Level Fixes Fail</h1>
+<h1 class="sec">VI. Finding 3 — Prompt-Level Fixes Fail</h1>
 
   <p>We tested three prompt-level interventions designed to instruct the model to use the V2 document only when relevant:</p>
 
@@ -438,26 +790,15 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>None of the three fixes consistently recover accuracy on uncovered facts. For Mayo Clinic, FIX2 and FIX3 reduce accuracy further — the explicit instruction appears to draw the AI's attention to the mismatch between the guide and the question, causing additional confusion rather than appropriate uncertainty.</p>
 
-  <p>This is consistent with the "what is seen cannot be unseen" principle demonstrated by Sun, Bai, and Dredze [5]: once an AI model has read a document, that document influences its output regardless of instructions to ignore it. The fix cannot live inside the prompt — it must be applied before the AI sees the guide at all.</p>
+  <p>This is consistent with the "what is seen cannot be unseen" principle demonstrated by Sun, Bai, and Dredze <a class="cite" href="#ref-5">[5]</a>: once an AI model has read a document, that document influences its output regardless of instructions to ignore it. The fix cannot live inside the prompt — it must be applied before the AI sees the guide at all.</p>
 
   <div class="callout">
     In our experiments, instructing the AI to selectively ignore the document after it had already been given did not appear to work reliably. This suggests the intervention may need to happen before the guide reaches the AI — rather than as an instruction inside the prompt.
   </div>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>7</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ VII. FINDING 4 ══════════════ -->
-<div class="page" id="s7">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">VII. Finding 4 — Query-Time Gating Recovers Accuracy Without Hurting Recall</h1>
+<h1 class="sec">VII. Finding 4 — Query-Time Gating Recovers Accuracy Without Hurting Recall</h1>
 
   <p>In our experiments, the most promising approach was to apply a relevance filter (called RAG-style query-time gating) to llms.txt injection. Rather than giving the AI the full guide for every question, the system first scores each incoming question for relevance — and only gives the AI the guide if the question appears to fall within what the guide covers. The question arrives first; the filter scores it; the guide is shown to the AI only if relevant. The AI never sees the filtering decision itself.</p>
 
@@ -491,20 +832,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>OPT2 reduced the accuracy drop on uncovered facts in 3 out of 5 institutions. Across all institutions combined, uncovered-fact accuracy was still 5.0pp lower than no guide at all (p=0.0098) — the filter is not perfect, because some questions slip through even when they shouldn't. On the other hand, accuracy on facts the guide does cover barely changed: only 1.3pp lower than always giving the full guide, which is close enough to zero to be noise (p=0.233). OPT3, which gives the AI only the top 2 guide sections instead of the whole file, performed much worse — accuracy on covered facts dropped by 32.8pp, meaning two sections are simply not enough.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>8</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ VIII. TUNING ══════════════ -->
-<div class="page" id="s8">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">VIII. Threshold Tuning and Classifier Experiments</h1>
+<h1 class="sec">VIII. Threshold Tuning and Classifier Experiments</h1>
 
   <h2 class="sub" id="s8a">A. Threshold Sweep (T20–T45)</h2>
   <p>The threshold is the sensitivity cutoff that decides whether a question is relevant enough to get the guide. We tested five different cutoff values (0.20, 0.25, 0.30, 0.40, 0.45) in addition to the original 0.35, across all five institutions. Results below are averaged across institutions.</p>
@@ -588,20 +918,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     The classifier experiments appear to hit a data ceiling. 263 labeled examples produce 70% cross-validation accuracy — enough to suggest the concept is feasible, but seemingly insufficient to meet both accuracy goals simultaneously in deployment. In our tests, the bottleneck appeared to be data size rather than model architecture, though more experiments would be needed to confirm this.
   </div>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>10</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ IX. FAILURE MODE ANALYSIS ══════════════ -->
-<div class="page" id="s9fm">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">IX. Failure Mode Analysis — Why Do Uncovered Facts Fail?</h1>
+<h1 class="sec">IX. Failure Mode Analysis — Why Do Uncovered Facts Fail?</h1>
 
   <p>Section V established that giving the AI the guide reduces accuracy on uncovered facts. This section asks a more precise question: <em>how</em> does the AI fail — does it give a wrong answer confidently, or does it simply say it doesn't know? And which types of facts are most likely to be missing from an institution's guide in the first place?</p>
 
@@ -689,20 +1008,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>Bakame AI has the shortest guide and the highest coverage rate — because its guide was written with a specific audience (investors and partners) in mind. The other four institutions have longer guides but lower coverage, because length was added without a clear scope definition. This reinforces the practical recommendation in Section XII: scope your guide to a specific audience's questions, not to all knowable facts about your institution.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>11</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ X. HUMAN VALIDATION ══════════════ -->
-<div class="page" id="s9v">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">X. Human Validation of the Automated Judge</h1>
+<h1 class="sec">X. Human Validation of the Automated Judge</h1>
 
   <h2 class="sub" id="s9va">A. Motivation</h2>
   <p>Sections IV–IX rely on GPT-4o-mini as an automated accuracy judge over all 14,500 model generations. This design decision is practical — human adjudication at that scale is infeasible — but it introduces an evaluator-level confound: if the judge's agreement with human assessment varies systematically across model families, downstream per-model comparisons inherit that bias. To bound this risk, we conducted a human-validation sub-study on a stratified sample of 300 generations drawn across the full institution × model × condition grid.</p>
@@ -716,19 +1024,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p><strong>Collection.</strong> Between 7 and 15 November 2026, we collected 1,000 ratings covering all 300 items. 297 items (99%) received ≥2 independent human ratings; 189 items (63%) received ≥3.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>12a</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<div class="page">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h2 class="sub" id="s9vc">C. Agreement statistics</h2>
+<h2 class="sub" id="s9vc">C. Agreement statistics</h2>
   <p>We report three complementary measures of agreement on the 300-item sample.</p>
 
   <p><strong>Pooled Cohen's κ (humans vs. automated judge).</strong> Treating each human rating as an independent comparison against the GPT-4o-mini judge (A/B/C only; FLAG and SKIP excluded; n = 939 comparable ratings):</p>
@@ -746,28 +1044,18 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p><strong>Pairwise Cohen's κ across the five graders:</strong></p>
   <table>
-    <tr><th></th><th class="c">Jeremie</th><th class="c">Bonheur</th><th class="c">Y. Ihirwe</th><th class="c">Jeanne</th><th class="c">Clementine</th></tr>
-    <tr><td>Jeremie Rukundo</td><td class="c">—</td><td class="c">0.580</td><td class="c">0.619</td><td class="c">0.699</td><td class="c">0.458</td></tr>
-    <tr><td>Bonheur DUFITIMANA</td><td class="c">0.580</td><td class="c">—</td><td class="c">0.729</td><td class="c">0.408</td><td class="c">0.487</td></tr>
-    <tr><td>Yolanda Ihirwe</td><td class="c">0.619</td><td class="c">0.729</td><td class="c">—</td><td class="c">0.539</td><td class="c">0.513</td></tr>
-    <tr><td>Jeanne d'Arc</td><td class="c">0.699</td><td class="c">0.408</td><td class="c">0.539</td><td class="c">—</td><td class="c">0.412</td></tr>
-    <tr><td>Clementine Ukwishaka</td><td class="c">0.458</td><td class="c">0.487</td><td class="c">0.513</td><td class="c">0.412</td><td class="c">—</td></tr>
+    <tr><th></th><th class="c">G1</th><th class="c">G2</th><th class="c">G3</th><th class="c">G4</th><th class="c">G5</th></tr>
+    <tr><td>G1</td><td class="c">—</td><td class="c">0.580</td><td class="c">0.619</td><td class="c">0.699</td><td class="c">0.458</td></tr>
+    <tr><td>G2</td><td class="c">0.580</td><td class="c">—</td><td class="c">0.729</td><td class="c">0.408</td><td class="c">0.487</td></tr>
+    <tr><td>G3</td><td class="c">0.619</td><td class="c">0.729</td><td class="c">—</td><td class="c">0.539</td><td class="c">0.513</td></tr>
+    <tr><td>G4</td><td class="c">0.699</td><td class="c">0.408</td><td class="c">0.539</td><td class="c">—</td><td class="c">0.412</td></tr>
+    <tr><td>G5</td><td class="c">0.458</td><td class="c">0.487</td><td class="c">0.513</td><td class="c">0.412</td><td class="c">—</td></tr>
   </table>
   <p>Pairwise κ ranges from 0.408 to 0.729 (mean 0.549). No rater is a systematic outlier; all pairs are in moderate-to-substantial agreement. Variance across pairs is consistent with task ambiguity rather than individual rater error.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>12b</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<div class="page">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h2 class="sub" id="s9vd">D. Finding 5 — The judge exhibits in-family bias</h2>
+<h2 class="sub" id="s9vd">D. Finding 5 — The judge exhibits in-family bias</h2>
   <p>Decomposing κ by the model whose output is being evaluated reveals a systematic pattern:</p>
 
   <table>
@@ -781,7 +1069,7 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>The GPT-4o-mini judge shows highest agreement with humans (κ = 0.575) when evaluating outputs from its own training family (GPT) and from the closely-aligned Google/Gemini family (κ = 0.536). Agreement drops by approximately 0.25 κ when evaluating outputs from Claude, Llama, and Qwen — a gap larger than the full standard error of the overall estimate.</p>
 
-  <p>We interpret this as <strong>in-family evaluation bias</strong>, consistent with the self-preference phenomenon documented by Panickssery et al. [14]: LLM judges appear to recognize outputs from their own family and score them more favorably. Our finding extends this observation into the context-coverage evaluation setting, where per-family decompositions of judge–human agreement remain underexplored.</p>
+  <p>We interpret this as <strong>in-family evaluation bias</strong>, consistent with the self-preference phenomenon documented by Panickssery et al. <a class="cite" href="#ref-14">[14]</a>: LLM judges appear to recognize outputs from their own family and score them more favorably. Our finding extends this observation into the context-coverage evaluation setting, where per-family decompositions of judge–human agreement remain underexplored.</p>
 
   <div class="callout">
     <strong>Implication for Sections IV–IX.</strong> Per-model accuracy estimates reported in this paper should be interpreted with the caveat that Claude, Llama, and Qwen outputs are evaluated by a judge that agrees with humans less reliably on their output styles. The directional findings (the injection paradox, OPT2/3 recovery, Bakame OUT harm) are robust across all models and are unlikely to be artifacts of judge bias. Per-model <em>ordering</em> within the accuracy tables should not be treated as reliable without multi-judge triangulation.
@@ -809,22 +1097,11 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
     <li><strong>Task difficulty ceiling.</strong> The near-identity of inter-human Krippendorff α (0.567) and majority-vote human-vs-judge κ (0.570) indicates that the A/B/C verdict schema itself admits roughly one in three boundary disagreements even among expert human raters. Any judge (automated or human) will exhibit moderate rather than high agreement on this task; the per-model bias of ≈0.25 κ documented in Section X.D is observed <em>above</em> this ambient noise floor.</li>
   </ul>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>12c</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ XI. SPEC RECOMMENDATION ══════════════ -->
-<div class="page" id="s9">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
+<h1 class="sec">XI. Spec Recommendation — <code>covers:</code> and <code>excludes:</code> Fields</h1>
 
-  <h1 class="sec">XI. Spec Recommendation — <code>covers:</code> and <code>excludes:</code> Fields</h1>
-
-  <p>The llms.txt specification [8] says nothing about how AI systems should decide when to use the file at the moment of answering a question (inference time). The current design — a static file served at <code>/llms.txt</code> — provides no mechanism for question-aware filtering. An AI system following the spec as written would give the AI the full file for every question it receives.</p>
+  <p>The llms.txt specification <a class="cite" href="#ref-8">[8]</a> says nothing about how AI systems should decide when to use the file at the moment of answering a question (inference time). The current design — a static file served at <code>/llms.txt</code> — provides no mechanism for question-aware filtering. An AI system following the spec as written would give the AI the full file for every question it receives.</p>
 
   <p>Our relevance filter (OPT2) requires <code>(use for: ...)</code> labels in section headers — scope signals we manually added to our research documents, and which Bakame AI independently added to their real published file. The fact that both a controlled research document and a real production document converged on this same labeling pattern suggests that publishers intuitively recognize the need for scope signals. The specification should formalize this practice.</p>
 
@@ -850,20 +1127,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>If the specification adopts <code>covers:</code> and <code>excludes:</code>, the OPT2 relevance filter becomes substantially simpler: instead of inferring scope from annotation text, the filter reads the publisher-declared topics directly. This reduces the engineering burden on AI consumers from "build a scope classifier" to "read a field."</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>10</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ X. PRACTICAL GUIDANCE ══════════════ -->
-<div class="page" id="s10">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">XII. Practical Guidance</h1>
+<h1 class="sec">XII. Practical Guidance</h1>
 
   <p>The key insight from this study is that coverage completeness is relative to the intended use case, not to the totality of knowable facts about an institution. A complete llms.txt for an enrollment goal means every question a prospective student is likely to ask is answered — not every fact about the university.</p>
 
@@ -886,20 +1152,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p><strong>Preliminary suggestion 4 — The llms.txt spec may benefit from scope declarations.</strong> In our experiments, adding short scope labels to guide sections (<code>use for: ...</code>) was what made OPT2's relevance filter work. That is essentially what <code>covers:</code> and <code>excludes:</code> fields would do at the document level — declare scope so AI consumers don't have to guess it. We tested the mechanism; what we have not tested is how it would work if built into the spec itself and adopted by real AI tools at scale. That remains an open question.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>11</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ XIII. LIMITATIONS AND THREAT MODEL ══════════════ -->
-<div class="page" id="s11">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">XIII. Limitations and Future Work</h1>
+<h1 class="sec">XIII. Limitations and Future Work</h1>
 
   <h2 class="sub" id="s11a">A. Study limitations</h2>
 
@@ -917,19 +1172,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p><strong>L7 — Synthetic documents.</strong> Four of five institutions use researcher-authored V2 documents, not published files. The real-world replication (Bakame) showed stronger harm on the published file, suggesting synthetic documents may underestimate the production effect.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>23</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<div class="page">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h2 class="sub" id="s11b">B. Threat model and adversarial future work</h2>
+<h2 class="sub" id="s11b">B. Threat model and adversarial future work</h2>
 
   <p><strong>Scope of this paper.</strong> All findings reported in Sections IV–X assume an <em>honest-publisher</em> threat model: the institution authoring the llms.txt guide intends to provide accurate information about itself, does not attempt to manipulate model behavior for third-party benefit, and does not include adversarial content. Under this assumption, the injection paradox (Section IX.A) is a <em>performance</em> failure — the model becomes more confidently wrong on uncovered facts due to representational dynamics in context processing, not due to deliberate manipulation. This assumption is load-bearing. The empirical results of this paper apply only when it holds.</p>
 
@@ -937,11 +1182,11 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <table>
     <tr><th>Class</th><th>Mechanism</th><th>Representative target outcome</th></tr>
-    <tr><td>T1 — Direct override</td><td>Guide contains explicit instructions overriding the user prompt (Perez &amp; Ribeiro [16])</td><td>Model issues attacker-controlled response to arbitrary queries</td></tr>
+    <tr><td>T1 — Direct override</td><td>Guide contains explicit instructions overriding the user prompt (Perez &amp; Ribeiro <a class="cite" href="#ref-16">[16]</a>)</td><td>Model issues attacker-controlled response to arbitrary queries</td></tr>
     <tr><td>T2 — Instructional drift</td><td>Subtle persuasive framing shifts model behavior without explicit override</td><td>Reduced hedging; biased framing of competitors</td></tr>
-    <tr><td>T3 — Data exfiltration</td><td>Guide instructs inclusion of attacker-controlled URLs or markdown images (Greshake et al. [15])</td><td>User queries silently leaked via image/URL loaders</td></tr>
+    <tr><td>T3 — Data exfiltration</td><td>Guide instructs inclusion of attacker-controlled URLs or markdown images (Greshake et al. <a class="cite" href="#ref-15">[15]</a>)</td><td>User queries silently leaked via image/URL loaders</td></tr>
     <tr><td>T4 — Brand redirection</td><td>Guide maps questions about X to recommendations for competitor Y</td><td>Market manipulation at inference time</td></tr>
-    <tr><td>T5 — Jailbreak amplification</td><td>Guide carries latent jailbreak templates (Zou et al. [17])</td><td>Safety guardrails bypassed on specific user queries</td></tr>
+    <tr><td>T5 — Jailbreak amplification</td><td>Guide carries latent jailbreak templates (Zou et al. <a class="cite" href="#ref-17">[17]</a>)</td><td>Safety guardrails bypassed on specific user queries</td></tr>
     <tr><td>T6 — Hallucination engineering</td><td>Deliberate omission exploits the injection paradox (Section IX.A)</td><td>Attacker-engineered confident-wrong responses on specific facts</td></tr>
     <tr><td>T7 — Delayed / multi-stage</td><td>Guide primes context that activates on an attacker's follow-up query</td><td>Multi-turn attacks invisible in single-turn evaluation</td></tr>
   </table>
@@ -952,20 +1197,9 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p><strong>Study 3 — adversarial empirics.</strong> We are executing a follow-on study (<em>BurnettBench Study 3: Adversarial llms.txt Empirics</em>) that measures (1) baseline attack success rates across all seven classes × five target models; (2) whether the Sections VII–VIII gating methods incidentally reduce attack success; (3) the precision/recall ceiling of a dedicated adversarial-guide detector trained on hand-crafted attack corpora. Study 3 adopts a responsible-disclosure protocol: adversarial examples will be disclosed to affected model providers 90 days prior to public release of the attack corpus.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>24</span>
-  </div>
-</div>
+<!-- SECTION BREAK -->
 
-<!-- ══════════════ XII. CONCLUSION ══════════════ -->
-<div class="page" id="s12">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">XIV. What Can and Cannot Be Concluded</h1>
+<h1 class="sec">XIV. What Can and Cannot Be Concluded</h1>
 
   <p>This study offers preliminary evidence that an accurate, well-structured llms.txt V2 guide may reduce AI accuracy on questions it does not cover. In our experiments, the effect appeared statistically significant (p=0.001, meaning unlikely to be due to chance alone), was observed across 4 of 5 institutions, and persisted after prompt-level interventions. It also appeared in a real published llms.txt file, not only in researcher-authored documents.</p>
 
@@ -977,121 +1211,111 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 
   <p>The practical takeaway from our experiments: <strong>scope your llms.txt to your audience's questions, not to all facts about your institution. Consider filtering at the time of the query. Declare scope in the document.</strong> A targeted, complete guide for one use case appeared more valuable — and less harmful — than a broad, incomplete one.</p>
 
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>13</span>
-  </div>
+<!-- SECTION BREAK -->
+
+<h1 class="sec">Declarations</h1>
+
+<h2 class="sub">Author contributions</h2>
+<p>H.N.: conceptualization, methodology, software, data curation, formal analysis, investigation, visualization, writing — original draft. M.H.E.: supervision, conceptualization (shared), writing — review and editing.</p>
+
+<h2 class="sub">Competing interests</h2>
+<p>H.N. is the founder of Bakame AI, one of the five institutions tested in this study. Bakame AI was included deliberately: as its founder, H.N. could give explicit authorization for Bakame's publicly-available llms.txt to be subjected to the study's analyses — including the documentation of its real-world accuracy harm (see Section VIII.C) — avoiding the ethical concern of using a third-party institution as a case study of weaknesses in its own published document without that institution's knowledge or consent. This design choice applies with equal or greater force to follow-on work involving adversarial testing (Section XIII.B). No preferential treatment was applied in the fact selection, judge prompting, or analysis; Bakame's results are reported alongside the other four institutions without adjustment. M.H.E. declares no competing interests.</p>
+
+<h2 class="sub">Data and code availability</h2>
+<p>The complete replication package — including the ground-truth fact set, probe questions, llms.txt documents (five synthetic + one real), all 14,500 model generations, GPT-4o-mini judge verdicts, and analysis scripts — is openly available at <a href="https://github.com/happy-tcu/burnettbench" target="_blank" rel="noopener">github.com/happy-tcu/burnettbench</a>. The human-validation web application and the 1,000 collected human ratings (anonymized as G1–G5) are available at <a href="https://github.com/happy-tcu/burnettbench-grader" target="_blank" rel="noopener">github.com/happy-tcu/burnettbench-grader</a>.</p>
+
+<h2 class="sub">Ethics</h2>
+<p>The human-validation sub-study (Section X) involves paid annotation of publicly-sourced AI outputs by consenting adult graders. No sensitive personal data was collected; sign-in information (name, email) was used only for compensation and progress tracking, and is anonymized as G1–G5 for publication. No clinical data, no vulnerable populations, and no deception were involved. The sub-study qualifies under federal exempt-category criteria for surveys and interview procedures with identifiable but low-risk data (45 CFR 46.104(d)(2)(ii), Revised Common Rule 2018). Retrospective institutional acknowledgment is being sought from TCU and the Anne Burnett Marion School of Medicine; an updated statement will appear in the submitted version.</p>
+
+<h2 class="sub">AI use disclosure</h2>
+<p>This study uses an automated LLM judge (GPT-4o-mini via the OpenAI API) as a central methodological component, documented in Section III.B and validated against human raters in Section X. Separately, the authors used Anthropic's Claude (via the Claude Code CLI, Opus 4.7) as a writing and development assistant throughout the project: implementing the human-validation web application, computing inter-rater agreement statistics from the collected rating data, drafting prose for the Human Validation (Section X) and Threat Model (Section XIII.B) sections from author-provided analysis, formatting references, and iterating on figure styling. All scientific claims, interpretations, statistical results, and final content decisions were reviewed and approved by the human authors, who take full responsibility for the manuscript.</p>
+
+<!-- SECTION BREAK -->
+
+<h1 class="sec">References</h1>
+
+  <p id="ref-1" style="font-size:10pt;line-height:1.9;">[1] Niyorurema, H. &amp; Estella, M.H. <a href="https://github.com/happy-tcu/burnettbench" target="_blank" rel="noopener">In-Context Format Effects of llms.txt-Structured Institutional Text: A Multi-Model Empirical Study</a>. <em>Working paper.</em></p>
+  <p id="ref-2" style="font-size:10pt;line-height:1.9;">[2] Aggarwal, P., et al. (2024). GEO: Generative Engine Optimization. <em>KDD 2024.</em></p>
+  <p id="ref-3" style="font-size:10pt;line-height:1.9;">[3] Shi, F., et al. (2023). Large Language Models Can Be Easily Distracted by Irrelevant Context. <em>ICML 2023.</em></p>
+  <p id="ref-4" style="font-size:10pt;line-height:1.9;">[4] Cuconasu, F., et al. (2024). The Power of Noise: Redefining Retrieval for RAG. <em>SIGIR 2024.</em></p>
+  <p id="ref-5" style="font-size:10pt;line-height:1.9;">[5] Sun, K., Bai, F. &amp; Dredze, M. (2025). What Is Seen Cannot Be Unseen: The Disruptive Effect of Knowledge Conflict on Large Language Models. <em>arXiv:2506.06485.</em></p>
+  <p id="ref-6" style="font-size:10pt;line-height:1.9;">[6] Longpre, S., et al. (2021). Entity-Based Knowledge Conflicts in Question Answering. <em>EMNLP 2021.</em></p>
+  <p id="ref-7" style="font-size:10pt;line-height:1.9;">[7] Singh, I.S., et al. (2024). ChunkRAG: Novel LLM-Chunk Filtering Method for RAG Systems. <em>arXiv:2410.19572.</em></p>
+  <p id="ref-8" style="font-size:10pt;line-height:1.9;">[8] Howard, J. &amp; Answer.AI. (2024). llms.txt: A proposed standard. <em>llmstxt.org.</em></p>
+  <p id="ref-9" style="font-size:10pt;line-height:1.9;">[9] Illyes, G. (2025). Statement at Google Search Central Live Deep Dive. Reported by Schwartz, B., <em>Search Engine Roundtable,</em> July 2025.</p>
+  <p id="ref-10" style="font-size:10pt;line-height:1.9;">[10] Liu, N.F., et al. (2024). Lost in the Middle. <em>TACL 12.</em></p>
+  <p id="ref-11" style="font-size:10pt;line-height:1.9;">[11] Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. <em>NeurIPS 33.</em></p>
+  <p id="ref-12" style="font-size:10pt;line-height:1.9;">[12] Petroni, F., et al. (2019). Language Models as Knowledge Bases? <em>EMNLP 2019.</em></p>
+  <p id="ref-13" style="font-size:10pt;line-height:1.9;">[13] Zheng, L., Chiang, W.-L., Sheng, Y., Zhuang, S., Wu, Z., Zhuang, Y., Lin, Z., Li, Z., Li, D., Xing, E.P., Zhang, H., Gonzalez, J.E., &amp; Stoica, I. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena. <em>NeurIPS 2023 Datasets and Benchmarks Track.</em> arXiv:2306.05685.</p>
+  <p id="ref-14" style="font-size:10pt;line-height:1.9;">[14] Panickssery, A., Bowman, S.R., &amp; Feng, S. (2024). LLM Evaluators Recognize and Favor Their Own Generations. <em>arXiv:2404.13076.</em></p>
+  <p id="ref-15" style="font-size:10pt;line-height:1.9;">[15] Greshake, K., Abdelnabi, S., Mishra, S., Endres, C., Holz, T., &amp; Fritz, M. (2023). Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection. <em>arXiv:2302.12173.</em></p>
+  <p id="ref-16" style="font-size:10pt;line-height:1.9;">[16] Perez, F., &amp; Ribeiro, I. (2022). Ignore Previous Prompt: Attack Techniques For Language Models. <em>ML Safety Workshop at NeurIPS 2022.</em> arXiv:2211.09527.</p>
+  <p id="ref-17" style="font-size:10pt;line-height:1.9;">[17] Zou, A., Wang, Z., Carlini, N., Nasr, M., Kolter, J.Z., &amp; Fredrikson, M. (2023). Universal and Transferable Adversarial Attacks on Aligned Language Models. <em>arXiv:2307.15043.</em></p>
+  <p id="ref-18" style="font-size:10pt;line-height:1.9;">[18] Krippendorff, K. (2004). <em>Content Analysis: An Introduction to Its Methodology</em> (2nd ed.). Sage Publications.</p>
+  <p id="ref-19" style="font-size:10pt;line-height:1.9;">[19] Landis, J.R., &amp; Koch, G.G. (1977). The Measurement of Observer Agreement for Categorical Data. <em>Biometrics 33(1), 159–174.</em></p>
+
+  </article>
 </div>
 
-<!-- ══════════════ DECLARATIONS ══════════════ -->
-<div class="page" id="decl">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
+<footer>© 2026 BurnettBench Research · Anne Burnett Marion School of Medicine, TCU · Released under CC BY 4.0</footer>
 
-  <h1 class="sec">Declarations</h1>
-
-  <h2 class="sub">Author contributions</h2>
-  <p>H.N.: conceptualization, methodology, software, data curation, formal analysis, investigation, visualization, writing — original draft. M.H.E.: supervision, conceptualization (shared), writing — review and editing.</p>
-
-  <h2 class="sub">Competing interests</h2>
-  <p>H.N. is the founder of Bakame AI, one of the five institutions tested in this study. Bakame AI was included deliberately: as its founder, H.N. could give explicit authorization for Bakame's publicly-available llms.txt to be subjected to the study's analyses — including the documentation of its real-world accuracy harm (see Section VIII.C) — avoiding the ethical concern of using a third-party institution as a case study of weaknesses in its own published document without that institution's knowledge or consent. This design choice applies with equal or greater force to follow-on work involving adversarial testing (Section XIII.B). No preferential treatment was applied in the fact selection, judge prompting, or analysis; Bakame's results are reported alongside the other four institutions without adjustment. M.H.E. declares no competing interests.</p>
-
-  <h2 class="sub">Data and code availability</h2>
-  <p>The complete replication package — including the ground-truth fact set, probe questions, llms.txt documents (five synthetic + one real), all 14,500 model generations, GPT-4o-mini judge verdicts, and analysis scripts — is openly available at <a href="https://github.com/happy-tcu/burnettbench" target="_blank" rel="noopener">github.com/happy-tcu/burnettbench</a>. The human-validation web application and the 1,000 collected human ratings (anonymized as G1–G5) are available at <a href="https://github.com/happy-tcu/burnettbench-grader" target="_blank" rel="noopener">github.com/happy-tcu/burnettbench-grader</a>.</p>
-
-  <h2 class="sub">Ethics</h2>
-  <p>The human-validation sub-study (Section X) involves paid annotation of publicly-sourced AI outputs by consenting adult graders. No sensitive personal data was collected; sign-in information (name, email) was used only for compensation and progress tracking, and is anonymized as G1–G5 for publication. No clinical data, no vulnerable populations, and no deception were involved. The sub-study qualifies under federal exempt-category criteria for surveys and interview procedures with identifiable but low-risk data (45 CFR 46.104(d)(2)(ii), Revised Common Rule 2018). Retrospective institutional acknowledgment is being sought from TCU and the Anne Burnett Marion School of Medicine; an updated statement will appear in the submitted version.</p>
-
-  <h2 class="sub">AI use disclosure</h2>
-  <p>This study uses an automated LLM judge (GPT-4o-mini via the OpenAI API) as a central methodological component, documented in Section III.B and validated against human raters in Section X. Separately, the authors used Anthropic's Claude (via the Claude Code CLI, Opus 4.7) as a writing and development assistant throughout the project: implementing the human-validation web application, computing inter-rater agreement statistics from the collected rating data, drafting prose for the Human Validation (Section X) and Threat Model (Section XIII.B) sections from author-provided analysis, formatting references, and iterating on figure styling. All scientific claims, interpretations, statistical results, and final content decisions were reviewed and approved by the human authors, who take full responsibility for the manuscript.</p>
-
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>25</span>
-  </div>
-</div>
-
-<!-- ══════════════ REFERENCES ══════════════ -->
-<div class="page" id="refs">
-  <div class="rh">
-    <span>BurnettBench — Scope Coverage Effects in llms.txt V2</span>
-    <span>Technical Report</span>
-  </div>
-
-  <h1 class="sec">References</h1>
-
-  <p style="font-size:10pt;line-height:1.9;">[1] Niyorurema, H. &amp; Estella, M.H. In-Context Format Effects of llms.txt-Structured Institutional Text: A Multi-Model Empirical Study. <em>Working paper.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[2] Aggarwal, P., et al. (2024). GEO: Generative Engine Optimization. <em>KDD 2024.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[3] Shi, F., et al. (2023). Large Language Models Can Be Easily Distracted by Irrelevant Context. <em>ICML 2023.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[4] Cuconasu, F., et al. (2024). The Power of Noise: Redefining Retrieval for RAG. <em>SIGIR 2024.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[5] Sun, K., Bai, F. &amp; Dredze, M. (2025). What Is Seen Cannot Be Unseen: The Disruptive Effect of Knowledge Conflict on Large Language Models. <em>arXiv:2506.06485.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[6] Longpre, S., et al. (2021). Entity-Based Knowledge Conflicts in Question Answering. <em>EMNLP 2021.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[7] Singh, I.S., et al. (2024). ChunkRAG: Novel LLM-Chunk Filtering Method for RAG Systems. <em>arXiv:2410.19572.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[8] Howard, J. &amp; Answer.AI. (2024). llms.txt: A proposed standard. <em>llmstxt.org.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[9] Illyes, G. (2025). Statement at Google Search Central Live Deep Dive. Reported by Schwartz, B., <em>Search Engine Roundtable,</em> July 2025.</p>
-  <p style="font-size:10pt;line-height:1.9;">[10] Liu, N.F., et al. (2024). Lost in the Middle. <em>TACL 12.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[11] Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. <em>NeurIPS 33.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[12] Petroni, F., et al. (2019). Language Models as Knowledge Bases? <em>EMNLP 2019.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[13] Zheng, L., Chiang, W.-L., Sheng, Y., Zhuang, S., Wu, Z., Zhuang, Y., Lin, Z., Li, Z., Li, D., Xing, E.P., Zhang, H., Gonzalez, J.E., &amp; Stoica, I. (2023). Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena. <em>NeurIPS 2023 Datasets and Benchmarks Track.</em> arXiv:2306.05685.</p>
-  <p style="font-size:10pt;line-height:1.9;">[14] Panickssery, A., Bowman, S.R., &amp; Feng, S. (2024). LLM Evaluators Recognize and Favor Their Own Generations. <em>arXiv:2404.13076.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[15] Greshake, K., Abdelnabi, S., Mishra, S., Endres, C., Holz, T., &amp; Fritz, M. (2023). Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection. <em>arXiv:2302.12173.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[16] Perez, F., &amp; Ribeiro, I. (2022). Ignore Previous Prompt: Attack Techniques For Language Models. <em>ML Safety Workshop at NeurIPS 2022.</em> arXiv:2211.09527.</p>
-  <p style="font-size:10pt;line-height:1.9;">[17] Zou, A., Wang, Z., Carlini, N., Nasr, M., Kolter, J.Z., &amp; Fredrikson, M. (2023). Universal and Transferable Adversarial Attacks on Aligned Language Models. <em>arXiv:2307.15043.</em></p>
-  <p style="font-size:10pt;line-height:1.9;">[18] Krippendorff, K. (2004). <em>Content Analysis: An Introduction to Its Methodology</em> (2nd ed.). Sage Publications.</p>
-  <p style="font-size:10pt;line-height:1.9;">[19] Landis, J.R., &amp; Koch, G.G. (1977). The Measurement of Observer Agreement for Categorical Data. <em>Biometrics 33(1), 159–174.</em></p>
-
-  <div class="footer">
-    <span>BurnettBench Research</span>
-    <span>14</span>
-  </div>
-</div>
-
-<!-- ══════════════ CHARTS ══════════════ -->
 <script>
+
 const institutions = ['Bakame AI','Mayo Clinic','Vinson & Elkins','USCIS','Rice University'];
 const cleanLayout = {
-  font:{family:"Inter, -apple-system, Arial, sans-serif", size:11},
+  font:{family:"Söhne, Inter, Helvetica Neue, Helvetica, Arial, sans-serif", size:12, color:'#262626'},
   paper_bgcolor:'#fff', plot_bgcolor:'#fff',
-  margin:{t:20,b:80,l:60,r:20},
-  legend:{orientation:'h',y:-0.22,font:{size:10}},
-  yaxis:{gridcolor:'#ebebeb', tickfont:{size:10}},
-  xaxis:{tickfont:{size:10}}
+  margin:{t:24,b:80,l:60,r:20},
+  legend:{orientation:'h',y:-0.22,font:{size:12, color:'#343434'}},
+  yaxis:{gridcolor:'#ededed', tickfont:{size:11, color:'#6b6b6b'}, zerolinecolor:'#ededed'},
+  xaxis:{tickfont:{size:11, color:'#6b6b6b'}}
+};
+// Light, soft palette — matches the light-theme diagrams and hero arc
+const OA = {
+  neutral:      '#ededed',  // very light gray — baseline bars
+  neutralMed:   '#c7c7c7',  // medium gray — secondary emphasis
+  neutralDark:  '#8f8f8f',  // dark gray — only for strong contrast lines
+  peach:        '#ffd1cf',  // soft coral (matches hero arc)
+  coral:        '#ff9c9a',  // medium coral — accent/harm
+  coralStrong:  '#ff6764',  // reserve for single-point emphasis
+  blueSoft:     '#cddff8',  // very soft blue
+  blueMed:      '#9abedc',  // medium blue
+  // legacy aliases
+  light:'#ededed', gray:'#8f8f8f', ink:'#595959', black:'#8f8f8f'
 };
 
 const cfg = {staticPlot:true, displayModeBar:false};
 
-// Fig 1 — IN_V2
+// Fig 1 — IN_V2 (the "it works" chart — lift shown with soft coral)
 Plotly.newPlot('fig1', [
   {name:'No Context (A)', type:'bar', x:institutions,
-   y:[6.3,30.6,25.7,37.7,31.7], marker:{color:'#dce8f5'}},
+   y:[6.3,30.6,25.7,37.7,31.7], marker:{color:OA.neutral}},
   {name:'V2 Injection', type:'bar', x:institutions,
-   y:[85.3,81.5,96.4,93.1,84.8], marker:{color:'#7bafd4'}}
+   y:[85.3,81.5,96.4,93.1,84.8], marker:{color:OA.peach}}
 ], {...cleanLayout, barmode:'group', height:340,
   yaxis:{...cleanLayout.yaxis, title:'Factual Accuracy (%)', range:[0,110]},
-  annotations:[{x:2,y:102,text:'p<.001 across all institutions',showarrow:false,font:{size:10,color:'#333'}}]
+  annotations:[{x:2,y:102,text:'p<.001 across all institutions',showarrow:false,font:{size:11,color:'#6b6b6b'}}]
 }, cfg);
 
-// Fig 2 — OUT_V2
+// Fig 2 — OUT_V2 (the "it harms" chart — harm shown with medium coral for emphasis)
 Plotly.newPlot('fig2', [
   {name:'No Context (A)', type:'bar', x:institutions,
-   y:[32.0,13.5,29.2,40.0,32.7], marker:{color:'#dce8f5'}},
+   y:[32.0,13.5,29.2,40.0,32.7], marker:{color:OA.neutral}},
   {name:'V2 Injection', type:'bar', x:institutions,
-   y:[28.0,15.0,18.5,30.0,24.8], marker:{color:'#a8c8e8'}}
+   y:[28.0,15.0,18.5,30.0,24.8], marker:{color:OA.coral}}
 ], {...cleanLayout, barmode:'group', height:340,
   yaxis:{...cleanLayout.yaxis, title:'Out-of-Scope Accuracy (%)', range:[0,55]},
   shapes:[{type:'line',x0:-0.5,x1:4.5,y0:29.5,y1:29.5,
-           line:{color:'#aaa',dash:'dot',width:1.5}}],
+           line:{color:OA.neutralDark,dash:'dot',width:1.5}}],
   annotations:[
-    {x:2,y:52,text:'Pooled: −6.4pp (p=0.001)',showarrow:false,font:{size:10,color:'#555'}},
-    {x:1,y:17,text:'Exception',showarrow:true,ay:-20,ax:25,font:{size:9,color:'#333'}}
+    {x:2,y:52,text:'Pooled: −6.4pp (p=0.001)',showarrow:false,font:{size:11,color:'#6b6b6b'}},
+    {x:1,y:17,text:'Exception',showarrow:true,ay:-20,ax:25,font:{size:10,color:'#6b6b6b'}}
   ]
 }, cfg);
 
-// Fig 3 — Fix experiment (OUT_V2)
+// Fig 3 — Fix experiment (OUT_V2) — 5 bars, graduated soft palette
 const fixConds = ['A','V2','FIX1','FIX2','FIX3'];
-const fixColors = ['#dce8f5','#a8c8e8','#7bafd4','#5a95c0','#3d7aaa'];
+const fixColors = [OA.neutral, OA.peach, OA.blueSoft, OA.blueMed, OA.coral];
 const fixData = {
   'Bakame AI':      [32.0,28.0,18.0,32.0,26.0],
   'Mayo Clinic':    [13.5,15.0,8.1,5.5,3.3],
@@ -1111,9 +1335,9 @@ Plotly.newPlot('fig4', fig4traces, {...cleanLayout, barmode:'group', height:360,
                ax:50,ay:-25,font:{size:9,color:'#555'}}]
 }, cfg);
 
-// Fig 4 — Gating (OPT2/OPT3)
+// Fig 4 — Gating (OPT2/OPT3) — 4 bars, soft neutral-to-blue sequence with coral for V2 harm
 const gateConds = ['A','V2','OPT2','OPT3'];
-const gateColors = ['#dce8f5','#a8c8e8','#7bafd4','#5a95c0'];
+const gateColors = [OA.neutral, OA.coral, OA.blueMed, OA.blueSoft];
 const inData  = [[6.3,30.6,25.7,37.7,31.7],[85.3,81.5,96.4,93.1,84.8],
                  [81.1,79.4,97.1,92.3,84.1],[72.6,50.0,53.6,53.1,54.5]];
 const outData = [[32.0,13.5,29.2,40.0,32.7],[28.0,15.0,18.5,30.0,24.8],
@@ -1143,26 +1367,27 @@ const sweepIN  = [87.4,87.9,86.5,86.8,86.1,87.4,56.8,77.2,81.5,85.1];
 const sweepOUT = [22.8,25.4,24.7,25.3,22.9,24.5,26.8,26.7,25.7,25.0];
 Plotly.newPlot('fig7', [
   {name:'IN_V2 Recall', type:'scatter', mode:'lines+markers',
-   x:sweepConds, y:sweepIN, marker:{color:'#e8a0a0',size:7}, line:{color:'#e8a0a0'}},
+   x:sweepConds, y:sweepIN, marker:{color:OA.coral,size:8}, line:{color:OA.coral,width:2}},
   {name:'OUT_V2 Accuracy', type:'scatter', mode:'lines+markers',
-   x:sweepConds, y:sweepOUT, marker:{color:'#a8c8e8',size:7}, line:{color:'#a8c8e8'}},
+   x:sweepConds, y:sweepOUT, marker:{color:OA.blueMed,size:8}, line:{color:OA.blueMed,width:2}},
   {name:'V2 recall ceiling (88.2%)', type:'scatter', mode:'lines',
    x:sweepConds, y:Array(10).fill(88.2),
-   line:{color:'#e8a0a0',dash:'dot',width:1}, showlegend:true},
+   line:{color:OA.peach,dash:'dot',width:1}, showlegend:true},
   {name:'Baseline OUT_V2 (29.5%)', type:'scatter', mode:'lines',
    x:sweepConds, y:Array(10).fill(29.5),
-   line:{color:'#a8c8e8',dash:'dot',width:1}, showlegend:true}
+   line:{color:OA.blueSoft,dash:'dot',width:1}, showlegend:true}
 ], {...cleanLayout, height:320,
   yaxis:{...cleanLayout.yaxis, title:'Accuracy (%, pooled)', range:[15,100]},
   xaxis:{...cleanLayout.xaxis, title:'Condition'},
   shapes:[{type:'line',x0:5.5,x1:5.5,y0:15,y1:100,
-           line:{color:'#ccc',dash:'dash',width:1}}],
+           line:{color:'#ededed',dash:'dash',width:1}}],
   annotations:[
-    {x:2.5,y:95,text:'← Threshold sweep',showarrow:false,font:{size:9,color:'#666'}},
-    {x:8,y:95,text:'Top-k sweep →',showarrow:false,font:{size:9,color:'#666'}},
-    {x:6,y:52,text:'OPT3 (K2)\nrecall collapse',showarrow:true,ay:25,ax:0,font:{size:8,color:'#555'}}
+    {x:2.5,y:95,text:'← Threshold sweep',showarrow:false,font:{size:10,color:'#9c9c9c'}},
+    {x:8,y:95,text:'Top-k sweep →',showarrow:false,font:{size:10,color:'#9c9c9c'}},
+    {x:6,y:52,text:'OPT3 (K2)\nrecall collapse',showarrow:true,ay:25,ax:0,font:{size:10,color:'#6b6b6b'}}
   ]
 }, cfg);
+
 </script>
 </body>
 </html>
