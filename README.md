@@ -21,6 +21,8 @@ BurnettBench Study 2 measures what happens when an AI is given an `llms.txt` V2 
 | OPT2 (query-time gating) OUT_V2 vs A | −5.0pp, p=0.0098 |
 | Injection paradox (C→B transition) | 14.5% of matched pairs |
 | Real file harm (Bakame OUT) | **−12.5pp** |
+| Human–judge agreement (majority-vote κ) | **0.570** (moderate) |
+| In-family judge bias (GPT vs Llama κ gap) | **~0.25 κ** |
 
 Full report: [`burnettbench_technical_report.html`](burnettbench_technical_report.html) (self-contained, open in any browser).
 
@@ -108,6 +110,12 @@ burnettbench/
 **Trained DistilBERT classifier checkpoints (`.pt`, ~2 GB)** are not in this repo. They live on Hugging Face:
 
 > https://huggingface.co/hniyorurema/burnettbench-scope-classifiers
+
+**Human-validation dataset** (300 items × 1,000 anonymized ratings, G1–G5, plus blind GPT-4o-mini judge verdicts) is published separately as a standalone 🤗 dataset:
+
+> https://huggingface.co/datasets/hniyorurema/burnettbench-human-validation
+
+Grader web app source: https://github.com/happy-tcu/burnettbench-grader
 
 ## Reproducing the headline numbers
 
