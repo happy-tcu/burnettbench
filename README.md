@@ -24,7 +24,9 @@ BurnettBench Study 2 measures what happens when an AI is given an `llms.txt` V2 
 | Human–judge agreement (majority-vote κ) | **0.570** (moderate) |
 | In-family judge bias (GPT vs Llama κ gap) | **~0.25 κ** |
 
-Full report: [`burnettbench_technical_report.html`](burnettbench_technical_report.html) (self-contained, open in any browser).
+Full report:
+- [`burnettbench_technical_report.pdf`](burnettbench_technical_report.pdf) — printable, ~1.4 MB
+- [`burnettbench_technical_report.html`](burnettbench_technical_report.html) — self-contained, open in any browser
 
 ## Study pipeline
 
@@ -97,7 +99,8 @@ flowchart LR
 burnettbench/
 ├── README.md                           ← this file
 ├── README.html                         ← original packaged README
-├── burnettbench_technical_report.html  ← full technical report
+├── burnettbench_technical_report.html  ← full technical report (HTML)
+├── burnettbench_technical_report.pdf   ← full technical report (PDF)
 ├── LICENSE                             ← MIT (code) / CC-BY-4.0 (data)
 ├── guides/     ← llms.txt V2 guide documents (5 synthetic + 1 real)
 ├── probes/     ← ground-truth facts and probe questions
