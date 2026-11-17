@@ -103,12 +103,16 @@ hr { border: none; border-top: 1px solid #ccc; margin: 48px 0; }
 .footer { margin-top: 60px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 9pt; color: #666; display: flex; justify-content: space-between; }
 
 /* ── Print / screen ── */
-@page { size: A4; margin: 0; }
+@page { size: A4; margin: 0.55in 0.5in; }
 @media print {
   body { background: #fff; }
-  .page, .cover { box-shadow: none; padding: 40px 56px; }
-  h1.sec { page-break-before: always; }
-  .cover { page-break-after: always; min-height: 0; }
+  .rh, .footer { display: none !important; }
+  .page { padding: 0 !important; box-shadow: none !important; margin: 0 !important; }
+  .cover { padding: 0 !important; box-shadow: none !important; min-height: 92vh; page-break-after: always; }
+  .cover-band { margin-top: 30vh; }
+  .cover-meta { margin-top: 20vh; }
+  h1.sec { page-break-before: always; margin-top: 0; }
+  #s1 h1.sec { page-break-before: avoid; }
   h1.sec + p, h2.sub + p { page-break-before: avoid; }
   h2.sub { page-break-after: avoid; }
   table, .chart-wrap, .callout, pre { page-break-inside: avoid; }
